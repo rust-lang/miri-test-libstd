@@ -8,7 +8,6 @@ cache:
 
 os:
 - linux
-- osx
 dist: xenial
 
 before_script:
@@ -22,6 +21,7 @@ before_script:
 # install Rust
 - curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"
 - export PATH=$HOME/.cargo/bin:$PATH
+- rustup component add rust-src
 - rustc --version
 # install Miri
 - cargo install --force --git https://github.com/solson/miri miri
@@ -34,7 +34,6 @@ notifications:
     on_success: never
     recipients:
       - post+travis@ralfj.de
-      - travis-miri@oli-obk.de
 branches:
   only:
   - master

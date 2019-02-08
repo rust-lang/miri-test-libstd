@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+
 ## Run a Rust libstd test suite with Miri.
 ## Assumes Miri to be installed.
 ## Usage:
