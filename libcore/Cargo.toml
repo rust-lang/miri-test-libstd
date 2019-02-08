@@ -1,0 +1,19 @@
+[package]
+authors = ["The Rust Project Developers"]
+name = "coretest"
+version = "0.0.0"
+autotests = false
+autobenches = false
+
+[lib]
+name = "coretest"
+path = "lib.rs"
+test = false
+bench = false
+
+[[test]]
+name = "coretests"
+path = "../rust-src/libcore/tests/lib.rs"
+
+[dev-dependencies]
+rand = "0.6"

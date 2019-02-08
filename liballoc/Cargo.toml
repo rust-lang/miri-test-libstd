@@ -1,0 +1,20 @@
+[package]
+authors = ["The Rust Project Developers"]
+name = "alloctest"
+version = "0.0.0"
+autotests = false
+autobenches = false
+
+[lib]
+name = "alloctest"
+path = "lib.rs"
+test = false
+bench = false
+
+[[test]]
+name = "collectionstests"
+path = "../rust-src/liballoc/tests/lib.rs"
+
+[dev-dependencies]
+rand = "0.6"
+rand_xorshift = "0.1"
