@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-export RUST_SRC=$(rustc --print sysroot)/lib/rustlib/src/rust/src
-
 # apply our patch
-PATCH=$(readlink -e rust-src.diff)
-{ cd $RUST_SRC && patch -p1 < $PATCH }
+rm -rf rust-src-patched
+cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
+( cd rust-src-patched && patch -p1 < ../rust-src.diff )
 
 # run the tests
+export RUST_SRC=rust-src-patched/src
 ./run-test.sh core
 ./run-test.sh alloc
