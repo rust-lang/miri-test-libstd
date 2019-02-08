@@ -34,6 +34,7 @@ notifications:
     on_success: never
     recipients:
       - post+travis@ralfj.de
+      - travis-miri@oli-obk.de
 branches:
   only:
   - master
