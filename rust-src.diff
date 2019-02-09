@@ -377,121 +377,239 @@ index 3cb3936038..6793b16481 100644
                  (from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, mid)),
                   from_utf8_unchecked_mut(slice::from_raw_parts_mut(
 diff --git a/src/libcore/tests/cell.rs b/src/libcore/tests/cell.rs
-index 56f295dff8..73bdaab586 100644
+index 56f295dff8..b16416022c 100644
 --- a/src/libcore/tests/cell.rs
 +++ b/src/libcore/tests/cell.rs
-@@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
-+
- use core::cell::*;
- use core::default::Default;
- use std::mem::drop;
+@@ -109,6 +109,7 @@ fn double_borrow_single_release_no_borrow_mut() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn discard_doesnt_unborrow() {
+     let x = RefCell::new(0);
+     let _b = x.borrow();
+@@ -349,6 +350,7 @@ fn refcell_ref_coercion() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn refcell_swap_borrows() {
+     let x = RefCell::new(0);
+     let _b = x.borrow();
+@@ -358,6 +360,7 @@ fn refcell_swap_borrows() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn refcell_replace_borrows() {
+     let x = RefCell::new(0);
+     let _b = x.borrow();
 diff --git a/src/libcore/tests/fmt/mod.rs b/src/libcore/tests/fmt/mod.rs
-index d86e21cf40..b10b63fc48 100644
+index d86e21cf40..3baa445e65 100644
 --- a/src/libcore/tests/fmt/mod.rs
 +++ b/src/libcore/tests/fmt/mod.rs
 @@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
++#![cfg(not(miri))] // FIXME: A bug in Miri breaks padding in string formatting
 +
  mod builders;
  mod float;
  mod num;
 diff --git a/src/libcore/tests/hash/mod.rs b/src/libcore/tests/hash/mod.rs
-index 135f4dfcac..bf3039a7e5 100644
+index 135f4dfcac..1000088e6b 100644
 --- a/src/libcore/tests/hash/mod.rs
 +++ b/src/libcore/tests/hash/mod.rs
-@@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
-+
- mod sip;
+@@ -73,9 +73,11 @@ fn test_writer_hasher() {
+     let cs: &mut [u8] = &mut [1, 2, 3];
+     let ptr = cs.as_ptr();
+     let slice_ptr = cs as *const [u8];
++    #[cfg(not(miri))] // Miri cannot hash pointers
+     assert_eq!(hash(&slice_ptr), hash(&ptr) + cs.len() as u64);
  
- use std::hash::{Hash, Hasher};
+     let slice_ptr = cs as *mut [u8];
++    #[cfg(not(miri))] // Miri cannot hash pointers
+     assert_eq!(hash(&slice_ptr), hash(&ptr) + cs.len() as u64);
+ }
+ 
 diff --git a/src/libcore/tests/iter.rs b/src/libcore/tests/iter.rs
-index 0fa99745d9..9b4c78f8d3 100644
+index 0fa99745d9..51b0356b0f 100644
 --- a/src/libcore/tests/iter.rs
 +++ b/src/libcore/tests/iter.rs
-@@ -190,6 +190,7 @@ fn test_iterator_step_by() {
- }
- 
- #[test]
-+#[cfg(not(miri))]
- fn test_iterator_step_by_nth() {
-     let mut it = (0..16).step_by(5);
-     assert_eq!(it.nth(0), Some(0));
-@@ -208,6 +209,7 @@ fn test_iterator_step_by_nth() {
- }
- 
- #[test]
-+#[cfg(not(miri))]
- fn test_iterator_step_by_nth_overflow() {
-     #[cfg(target_pointer_width = "8")]
-     type Bigger = u16;
-@@ -253,12 +255,14 @@ fn test_iterator_step_by_nth_overflow() {
+@@ -253,6 +253,7 @@ fn test_iterator_step_by_nth_overflow() {
  
  #[test]
  #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_iterator_step_by_zero() {
      let mut it = (0..).step_by(0);
      it.next();
- }
- 
- #[test]
-+#[cfg(not(miri))]
- fn test_iterator_step_by_size_hint() {
-     struct StubSizeHint(usize, Option<usize>);
-     impl Iterator for StubSizeHint {
-@@ -1413,6 +1417,7 @@ fn test_rposition() {
+@@ -1413,6 +1414,7 @@ fn test_rposition() {
  
  #[test]
  #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_rposition_panic() {
      let v: [(Box<_>, Box<_>); 4] =
          [(box 0, box 0), (box 0, box 0),
-@@ -1652,6 +1657,7 @@ fn test_range_inclusive_nth() {
+@@ -1659,7 +1661,9 @@ fn test_range_step() {
+     assert_eq!((1..21).rev().step_by(5).collect::<Vec<isize>>(), [20, 15, 10, 5]);
+     assert_eq!((1..21).rev().step_by(6).collect::<Vec<isize>>(), [20, 14, 8, 2]);
+     assert_eq!((200..255).step_by(50).collect::<Vec<u8>>(), [200, 250]);
++    #[cfg(not(miri))] // Miri cannot compare empty slices
+     assert_eq!((200..-5).step_by(1).collect::<Vec<isize>>(), []);
++    #[cfg(not(miri))] // Miri cannot compare empty slices
+     assert_eq!((200..200).step_by(1).collect::<Vec<isize>>(), []);
+ 
+     assert_eq!((0..20).step_by(1).size_hint(), (20, Some(20)));
+diff --git a/src/libcore/tests/num/bignum.rs b/src/libcore/tests/num/bignum.rs
+index b873f1dd06..956c22c998 100644
+--- a/src/libcore/tests/num/bignum.rs
++++ b/src/libcore/tests/num/bignum.rs
+@@ -3,6 +3,7 @@ use core::num::bignum::tests::Big8x3 as Big;
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_from_u64_overflow() {
+     Big::from_u64(0x1000000);
+ }
+@@ -19,12 +20,14 @@ fn test_add() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_add_overflow_1() {
+     Big::from_small(1).add(&Big::from_u64(0xffffff));
  }
  
  #[test]
-+#[cfg(not(miri))]
- fn test_range_step() {
-     #![allow(deprecated)]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_add_overflow_2() {
+     Big::from_u64(0xffffff).add(&Big::from_small(1));
+ }
+@@ -42,6 +45,7 @@ fn test_add_small() {
  
-@@ -1675,6 +1681,7 @@ fn test_range_step() {
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_add_small_overflow() {
+     Big::from_u64(0xffffff).add_small(1);
+ }
+@@ -57,12 +61,14 @@ fn test_sub() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_sub_underflow_1() {
+     Big::from_u64(0x10665).sub(&Big::from_u64(0x10666));
  }
  
  #[test]
-+#[cfg(not(miri))]
- fn test_step_by_skip() {
-     assert_eq!((0..640).step_by(128).skip(1).collect::<Vec<_>>(), [128, 256, 384, 512]);
-     assert_eq!((0..=50).step_by(10).nth(3), Some(30));
-@@ -1682,6 +1689,7 @@ fn test_step_by_skip() {
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_sub_underflow_2() {
+     Big::from_small(0).sub(&Big::from_u64(0x123456));
+ }
+@@ -76,6 +82,7 @@ fn test_mul_small() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_small_overflow() {
+     Big::from_u64(0x800000).mul_small(2);
+ }
+@@ -94,12 +101,14 @@ fn test_mul_pow2() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_pow2_overflow_1() {
+     Big::from_u64(0x1).mul_pow2(24);
  }
  
  #[test]
-+#[cfg(not(miri))]
- fn test_range_inclusive_step() {
-     assert_eq!((0..=50).step_by(10).collect::<Vec<_>>(), [0, 10, 20, 30, 40, 50]);
-     assert_eq!((0..=5).step_by(1).collect::<Vec<_>>(), [0, 1, 2, 3, 4, 5]);
-diff --git a/src/libcore/tests/num/mod.rs b/src/libcore/tests/num/mod.rs
-index a17c094679..ab638e06cc 100644
---- a/src/libcore/tests/num/mod.rs
-+++ b/src/libcore/tests/num/mod.rs
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_pow2_overflow_2() {
+     Big::from_u64(0x123).mul_pow2(16);
+ }
+@@ -118,12 +127,14 @@ fn test_mul_pow5() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_pow5_overflow_1() {
+     Big::from_small(1).mul_pow5(12);
+ }
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_pow5_overflow_2() {
+     Big::from_small(230).mul_pow5(8);
+ }
+@@ -141,12 +152,14 @@ fn test_mul_digits() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_digits_overflow_1() {
+     Big::from_u64(0x800000).mul_digits(&[2]);
+ }
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mul_digits_overflow_2() {
+     Big::from_u64(0x1000).mul_digits(&[0, 0x10]);
+ }
+@@ -206,6 +219,7 @@ fn test_get_bit() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_get_bit_out_of_range() {
+     Big::from_small(42).get_bit(24);
+ }
+diff --git a/src/libcore/tests/num/dec2flt/mod.rs b/src/libcore/tests/num/dec2flt/mod.rs
+index 8f1cd32c35..faeaabbf95 100644
+--- a/src/libcore/tests/num/dec2flt/mod.rs
++++ b/src/libcore/tests/num/dec2flt/mod.rs
+@@ -52,6 +52,7 @@ fn large() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri is too slow
+ fn subnormals() {
+     test_literal!(5e-324);
+     test_literal!(91e-324);
+@@ -63,6 +64,7 @@ fn subnormals() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri is too slow
+ fn infinity() {
+     test_literal!(1e400);
+     test_literal!(1e309);
+diff --git a/src/libcore/tests/num/flt2dec/mod.rs b/src/libcore/tests/num/flt2dec/mod.rs
+index fed9ce73b2..d362c7994d 100644
+--- a/src/libcore/tests/num/flt2dec/mod.rs
++++ b/src/libcore/tests/num/flt2dec/mod.rs
 @@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
++#![cfg(not(miri))] // Miri does not implement ldexp, which most tests here need
 +
- use core::convert::{TryFrom, TryInto};
- use core::cmp::PartialEq;
- use core::fmt::Debug;
+ use std::prelude::v1::*;
+ use std::{str, i16, f32, f64, fmt};
+ 
 diff --git a/src/libcore/tests/option.rs b/src/libcore/tests/option.rs
-index b059b13486..1ba886ce03 100644
+index b059b13486..87ce2720c5 100644
 --- a/src/libcore/tests/option.rs
 +++ b/src/libcore/tests/option.rs
 @@ -69,6 +69,7 @@ fn test_option_dance() {
  }
  
  #[test] #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_option_too_much_dance() {
      struct A;
      let mut y = Some(A);
@@ -499,7 +617,7 @@ index b059b13486..1ba886ce03 100644
  
  #[test]
  #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_unwrap_panic1() {
      let x: Option<isize> = None;
      x.unwrap();
@@ -507,29 +625,79 @@ index b059b13486..1ba886ce03 100644
  
  #[test]
  #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_unwrap_panic2() {
      let x: Option<String> = None;
      x.unwrap();
 diff --git a/src/libcore/tests/ptr.rs b/src/libcore/tests/ptr.rs
-index 65c1a3e025..5784559082 100644
+index 65c1a3e025..2c53e4832a 100644
 --- a/src/libcore/tests/ptr.rs
 +++ b/src/libcore/tests/ptr.rs
-@@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
-+
- use core::ptr::*;
- use core::cell::RefCell;
+@@ -40,6 +40,7 @@ fn test() {
+ }
  
+ #[test]
++#[cfg(not(miri))] // This test performs invalid OOB pointer arithmetic
+ fn test_is_null() {
+     let p: *const isize = null();
+     assert!(p.is_null());
+@@ -145,6 +146,7 @@ fn test_as_ref() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // This test is UB according to Stacked Borrows
+ fn test_as_mut() {
+     unsafe {
+         let p: *mut isize = null_mut();
+@@ -206,6 +208,7 @@ fn test_ptr_addition() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // This test performs invalid OOB pointer arithmetic
+ fn test_ptr_subtraction() {
+     unsafe {
+         let xs = vec![0,1,2,3,4,5,6,7,8,9];
+@@ -249,6 +252,7 @@ fn test_unsized_nonnull() {
+ 
+ #[test]
+ #[allow(warnings)]
++#[cfg(not(miri))] // Miri cannot hash pointers
+ // Have a symbol for the test below. It doesn’t need to be an actual variadic function, match the
+ // ABI, or even point to an actual executable code, because the function itself is never invoked.
+ #[no_mangle]
+@@ -288,6 +292,7 @@ fn write_unaligned_drop() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri cannot compute actual alignment of an allocation
+ fn align_offset_zst() {
+     // For pointers of stride = 0, the pointer is already aligned or it cannot be aligned at
+     // all, because no amount of elements will align the pointer.
+@@ -302,6 +307,7 @@ fn align_offset_zst() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri cannot compute actual alignment of an allocation
+ fn align_offset_stride1() {
+     // For pointers of stride = 1, the pointer can always be aligned. The offset is equal to
+     // number of bytes.
+@@ -318,6 +324,7 @@ fn align_offset_stride1() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri is too slow
+ fn align_offset_weird_strides() {
+     #[repr(packed)]
+     struct A3(u16, u8);
 diff --git a/src/libcore/tests/result.rs b/src/libcore/tests/result.rs
-index 1fab07526a..7bfd396f68 100644
+index 1fab07526a..bbc8568517 100644
 --- a/src/libcore/tests/result.rs
 +++ b/src/libcore/tests/result.rs
 @@ -117,6 +117,7 @@ fn test_unwrap_or_else() {
  
  #[test]
  #[should_panic]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  pub fn test_unwrap_or_else_panic() {
      fn handler(msg: &'static str) -> isize {
          if msg == "I got this." {
@@ -537,7 +705,7 @@ index 1fab07526a..7bfd396f68 100644
  }
  #[test]
  #[should_panic(expected="Got expected error: \"All good\"")]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  pub fn test_expect_err() {
      let err: Result<isize, &'static str> = Err("All good");
      err.expect("Got expected error");
@@ -545,19 +713,19 @@ index 1fab07526a..7bfd396f68 100644
  }
  #[test]
  #[should_panic(expected="Got expected ok: \"All good\"")]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  pub fn test_expect_err_ok() {
      let err: Result<&'static str, isize> = Ok("All good");
      err.expect_err("Got expected ok");
 diff --git a/src/libcore/tests/slice.rs b/src/libcore/tests/slice.rs
-index e210e83122..04d646ea01 100644
+index e210e83122..31d16e0e32 100644
 --- a/src/libcore/tests/slice.rs
 +++ b/src/libcore/tests/slice.rs
 @@ -782,6 +782,7 @@ mod slice_index {
      //  to be used in `should_panic`)
      #[test]
      #[should_panic(expected = "out of range")]
-+    #[cfg(not(miri))]
++    #[cfg(not(miri))] // Miri does not support panics
      fn assert_range_eq_can_fail_by_panic() {
          assert_range_eq!([0, 1, 2], 0..5, [0, 1, 2]);
      }
@@ -565,7 +733,7 @@ index e210e83122..04d646ea01 100644
      //  to be used in `should_panic`)
      #[test]
      #[should_panic(expected = "==")]
-+    #[cfg(not(miri))]
++    #[cfg(not(miri))] // Miri does not support panics
      fn assert_range_eq_can_fail_by_inequality() {
          assert_range_eq!([0, 1, 2], 0..2, [0, 1, 2]);
      }
@@ -573,7 +741,7 @@ index e210e83122..04d646ea01 100644
  
                  #[test]
                  #[should_panic(expected = $expect_msg)]
-+                #[cfg(not(miri))]
++                #[cfg(not(miri))] // Miri does not support panics
                  fn index_fail() {
                      let v = $data;
                      let v: &[_] = &v;
@@ -581,7 +749,7 @@ index e210e83122..04d646ea01 100644
  
                  #[test]
                  #[should_panic(expected = $expect_msg)]
-+                #[cfg(not(miri))]
++                #[cfg(not(miri))] // Miri does not support panics
                  fn index_mut_fail() {
                      let mut v = $data;
                      let v: &mut [_] = &mut v;
@@ -589,7 +757,7 @@ index e210e83122..04d646ea01 100644
  
  #[test]
  #[cfg(not(target_arch = "wasm32"))]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support entropy
  fn sort_unstable() {
      use core::cmp::Ordering::{Equal, Greater, Less};
      use core::slice::heapsort;
@@ -597,65 +765,66 @@ index e210e83122..04d646ea01 100644
  }
  
  #[test]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri cannot compute actual alignment of an allocation
  fn test_align_to_simple() {
      let bytes = [1u8, 2, 3, 4, 5, 6, 7];
      let (prefix, aligned, suffix) = unsafe { bytes.align_to::<u16>() };
-@@ -1181,6 +1187,7 @@ fn test_align_to_simple() {
+@@ -1189,6 +1195,7 @@ fn test_align_to_zst() {
  }
  
  #[test]
-+#[cfg(not(miri))]
- fn test_align_to_zst() {
-     let bytes = [1, 2, 3, 4, 5, 6, 7];
-     let (prefix, aligned, suffix) = unsafe { bytes.align_to::<()>() };
-@@ -1189,6 +1196,7 @@ fn test_align_to_zst() {
- }
- 
- #[test]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri cannot compute actual alignment of an allocation
  fn test_align_to_non_trivial() {
      #[repr(align(8))] struct U64(u64, u64);
      #[repr(align(8))] struct U64U64U32(u64, u64, u32);
-@@ -1200,6 +1208,7 @@ fn test_align_to_non_trivial() {
- }
- 
- #[test]
-+#[cfg(not(miri))]
- fn test_align_to_empty_mid() {
-     use core::mem;
- 
-@@ -1297,6 +1306,7 @@ fn test_copy_within() {
+@@ -1297,6 +1304,7 @@ fn test_copy_within() {
  
  #[test]
  #[should_panic(expected = "src is out of bounds")]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_copy_within_panics_src_too_long() {
      let mut bytes = *b"Hello, World!";
      // The length is only 13, so 14 is out of bounds.
-@@ -1305,6 +1315,7 @@ fn test_copy_within_panics_src_too_long() {
+@@ -1305,6 +1313,7 @@ fn test_copy_within_panics_src_too_long() {
  
  #[test]
  #[should_panic(expected = "dest is out of bounds")]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_copy_within_panics_dest_too_long() {
      let mut bytes = *b"Hello, World!";
      // The length is only 13, so a slice of length 4 starting at index 10 is out of bounds.
-@@ -1312,6 +1323,7 @@ fn test_copy_within_panics_dest_too_long() {
+@@ -1312,6 +1321,7 @@ fn test_copy_within_panics_dest_too_long() {
  }
  #[test]
  #[should_panic(expected = "src end is before src start")]
-+#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
  fn test_copy_within_panics_src_inverted() {
      let mut bytes = *b"Hello, World!";
      // 2 is greater than 1, so this range is invalid.
 diff --git a/src/libcore/tests/time.rs b/src/libcore/tests/time.rs
-index 6efd22572d..d39bd06930 100644
+index 6efd22572d..f7d00304df 100644
 --- a/src/libcore/tests/time.rs
 +++ b/src/libcore/tests/time.rs
-@@ -1,3 +1,5 @@
-+#![cfg(not(miri))]
-+
- use core::time::Duration;
+@@ -107,12 +107,14 @@ fn checked_sub() {
  
  #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn sub_bad1() {
+     let _ = Duration::new(0, 0) - Duration::new(0, 1);
+ }
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn sub_bad2() {
+     let _ = Duration::new(0, 0) - Duration::new(1, 0);
+ }
+@@ -285,6 +287,7 @@ fn debug_formatting_precision_two() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // FIXME: A bug in Miri breaks padding in string formatting
+ fn debug_formatting_precision_high() {
+     assert_eq!(format!("{:.5?}",  Duration::new(0, 23_678)), "23.67800µs");
+ 
