@@ -11,6 +11,7 @@ set -euo pipefail
 
 RUST_SRC=$(readlink -e ${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/src})
 CRATE=${1:-}
+shift
 
 if [[ -z "$CRATE" ]]; then
     echo "Usage: $0 CRATE_NAME"
@@ -22,4 +23,4 @@ ln -s $RUST_SRC rust-src
 
 cd lib$CRATE
 XARGO_RUST_SRC=$RUST_SRC cargo miri setup
-MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test
+MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- "$@"
