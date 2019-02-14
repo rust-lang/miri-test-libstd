@@ -1,74 +1,1022 @@
-diff --git a/src/libcore/str/mod.rs b/src/libcore/str/mod.rs
-index e9190cc3dd..b97f9e2bd1 100644
---- a/src/libcore/str/mod.rs
-+++ b/src/libcore/str/mod.rs
-@@ -1757,9 +1757,9 @@ mod traits {
-         }
-         #[inline]
-         unsafe fn get_unchecked_mut(self, slice: &mut str) -> &mut Self::Output {
--            let ptr = slice.as_ptr().add(self.start);
-+            let ptr = slice.as_mut_ptr().add(self.start);
-             let len = self.end - self.start;
--            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr as *mut u8, len))
-+            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, len))
-         }
-         #[inline]
-         fn index(self, slice: &str) -> &Self::Output {
-@@ -1821,8 +1821,8 @@ mod traits {
-         }
-         #[inline]
-         unsafe fn get_unchecked_mut(self, slice: &mut str) -> &mut Self::Output {
--            let ptr = slice.as_ptr();
--            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr as *mut u8, self.end))
-+            let ptr = slice.as_mut_ptr();
-+            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, self.end))
-         }
-         #[inline]
-         fn index(self, slice: &str) -> &Self::Output {
-@@ -1883,9 +1883,9 @@ mod traits {
-         }
-         #[inline]
-         unsafe fn get_unchecked_mut(self, slice: &mut str) -> &mut Self::Output {
--            let ptr = slice.as_ptr().add(self.start);
-+            let ptr = slice.as_mut_ptr().add(self.start);
-             let len = slice.len() - self.start;
--            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr as *mut u8, len))
-+            super::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, len))
-         }
-         #[inline]
-         fn index(self, slice: &str) -> &Self::Output {
-@@ -2213,6 +2213,22 @@ impl str {
-         self as *const str as *const u8
+diff --git a/src/liballoc/boxed.rs b/src/liballoc/boxed.rs
+index 8e01e12e0b..f6411a3db8 100644
+--- a/src/liballoc/boxed.rs
++++ b/src/liballoc/boxed.rs
+@@ -202,10 +202,15 @@ impl<T: ?Sized> Box<T> {
+     #[unstable(feature = "ptr_internals", issue = "0", reason = "use into_raw_non_null instead")]
+     #[inline]
+     #[doc(hidden)]
+-    pub fn into_unique(b: Box<T>) -> Unique<T> {
+-        let unique = b.0;
++    pub fn into_unique(mut b: Box<T>) -> Unique<T> {
++        // Box is kind-of a library type, but recognized as a "unique pointer" by
++        // Stacked Borrows.  This function here corresponds to "reborrowing to
++        // a raw pointer", but there is no actual reborrow here -- so
++        // without some care, the pointer we are returning here still carries
++        // the `Uniq` tag.  We round-trip through a mutable reference to avoid that.
++        let unique = unsafe { b.0.as_mut() as *mut T };
+         mem::forget(b);
+-        unique
++        unsafe { Unique::new_unchecked(unique) }
      }
  
-+    /// Converts a mutable string slice to a raw pointer.
-+    ///
-+    /// As string slices are a slice of bytes, the raw pointer points to a
-+    /// [`u8`]. This pointer will be pointing to the first byte of the string
-+    /// slice.
-+    ///
-+    /// It is your responsibility to make sure that the string slice only gets
-+    /// modified in a way that it remains valid UTF-8.
-+    ///
-+    /// [`u8`]: primitive.u8.html
-+    #[unstable(feature = "str_as_mut_ptr", issue = "58215")]
-+    #[inline]
-+    pub fn as_mut_ptr(&mut self) -> *mut u8 {
-+        self as *mut str as *mut u8
-+    }
-+
-     /// Returns a subslice of `str`.
-     ///
-     /// This is the non-panicking alternative to indexing the `str`. Returns
-@@ -2500,7 +2516,7 @@ impl str {
-         // is_char_boundary checks that the index is in [0, .len()]
-         if self.is_char_boundary(mid) {
-             let len = self.len();
--            let ptr = self.as_ptr() as *mut u8;
-+            let ptr = self.as_mut_ptr();
-             unsafe {
-                 (from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, mid)),
-                  from_utf8_unchecked_mut(slice::from_raw_parts_mut(
+     /// Consumes and leaks the `Box`, returning a mutable reference,
+diff --git a/src/liballoc/collections/btree/map.rs b/src/liballoc/collections/btree/map.rs
+index 5ec5064b73..18fdc8ca2e 100644
+--- a/src/liballoc/collections/btree/map.rs
++++ b/src/liballoc/collections/btree/map.rs
+@@ -1634,9 +1634,11 @@ impl<'a, K, V> RangeMut<'a, K, V> {
+ 
+         let mut cur_handle = match handle.right_kv() {
+             Ok(kv) => {
+-                let (k, v) = ptr::read(&kv).into_kv_mut();
+-                self.front = kv.right_edge();
+-                return (k, v);
++                self.front = ptr::read(&kv).right_edge();
++                // Doing the descend invalidates the references returned by `into_kv_mut`,
++                // so we have to do this last.
++                let (k, v) = kv.into_kv_mut();
++                return (k, v); // coerce k from `&mut K` to `&K`
+             }
+             Err(last_edge) => {
+                 let next_level = last_edge.into_node().ascend().ok();
+@@ -1647,9 +1649,11 @@ impl<'a, K, V> RangeMut<'a, K, V> {
+         loop {
+             match cur_handle.right_kv() {
+                 Ok(kv) => {
+-                    let (k, v) = ptr::read(&kv).into_kv_mut();
+-                    self.front = first_leaf_edge(kv.right_edge().descend());
+-                    return (k, v);
++                    self.front = first_leaf_edge(ptr::read(&kv).right_edge().descend());
++                    // Doing the descend invalidates the references returned by `into_kv_mut`,
++                    // so we have to do this last.
++                    let (k, v) = kv.into_kv_mut();
++                    return (k, v); // coerce k from `&mut K` to `&K`
+                 }
+                 Err(last_edge) => {
+                     let next_level = last_edge.into_node().ascend().ok();
+@@ -1680,9 +1684,11 @@ impl<'a, K, V> RangeMut<'a, K, V> {
+ 
+         let mut cur_handle = match handle.left_kv() {
+             Ok(kv) => {
+-                let (k, v) = ptr::read(&kv).into_kv_mut();
+-                self.back = kv.left_edge();
+-                return (k, v);
++                self.back = ptr::read(&kv).left_edge();
++                // Doing the descend invalidates the references returned by `into_kv_mut`,
++                // so we have to do this last.
++                let (k, v) = kv.into_kv_mut();
++                return (k, v); // coerce k from `&mut K` to `&K`
+             }
+             Err(last_edge) => {
+                 let next_level = last_edge.into_node().ascend().ok();
+@@ -1693,9 +1699,11 @@ impl<'a, K, V> RangeMut<'a, K, V> {
+         loop {
+             match cur_handle.left_kv() {
+                 Ok(kv) => {
+-                    let (k, v) = ptr::read(&kv).into_kv_mut();
+-                    self.back = last_leaf_edge(kv.left_edge().descend());
+-                    return (k, v);
++                    self.back = last_leaf_edge(ptr::read(&kv).left_edge().descend());
++                    // Doing the descend invalidates the references returned by `into_kv_mut`,
++                    // so we have to do this last.
++                    let (k, v) = kv.into_kv_mut();
++                    return (k, v); // coerce k from `&mut K` to `&K`
+                 }
+                 Err(last_edge) => {
+                     let next_level = last_edge.into_node().ascend().ok();
+diff --git a/src/liballoc/collections/btree/node.rs b/src/liballoc/collections/btree/node.rs
+index eb0667228d..1cdf4fdd2d 100644
+--- a/src/liballoc/collections/btree/node.rs
++++ b/src/liballoc/collections/btree/node.rs
+@@ -645,6 +645,8 @@ impl<'a, K: 'a, V: 'a, Type> NodeRef<marker::Mut<'a>, K, V, Type> {
+     }
+ 
+     fn into_key_slice_mut(mut self) -> &'a mut [K] {
++        // Same as for `into_key_slice` above, we try to avoid a run-time check
++        // (the alignment comparison will usually be performed at compile-time).
+         if mem::align_of::<K>() > mem::align_of::<LeafNode<(), ()>>() && self.is_shared_root() {
+             &mut []
+         } else {
+@@ -667,9 +669,26 @@ impl<'a, K: 'a, V: 'a, Type> NodeRef<marker::Mut<'a>, K, V, Type> {
+         }
+     }
+ 
+-    fn into_slices_mut(self) -> (&'a mut [K], &'a mut [V]) {
+-        let k = unsafe { ptr::read(&self) };
+-        (k.into_key_slice_mut(), self.into_val_slice_mut())
++    fn into_slices_mut(mut self) -> (&'a mut [K], &'a mut [V]) {
++        debug_assert!(!self.is_shared_root());
++        // We cannot use the getters here, because calling the second one
++        // invalidates the reference returned by the first.
++        // More precisely, it is the call to `len` that is the culprit,
++        // because that creates a shared reference to the header, which *can*
++        // overlap with the keys (and even the values, for ZST keys).
++        unsafe {
++            let len = self.len();
++            let leaf = self.as_leaf_mut();
++            let keys = slice::from_raw_parts_mut(
++                MaybeUninit::first_ptr_mut(&mut (*leaf).keys),
++                len
++            );
++            let vals = slice::from_raw_parts_mut(
++                MaybeUninit::first_ptr_mut(&mut (*leaf).vals),
++                len
++            );
++            (keys, vals)
++        }
+     }
+ }
+ 
+diff --git a/src/liballoc/tests/arc.rs b/src/liballoc/tests/arc.rs
+index 7c5a892612..5646708d32 100644
+--- a/src/liballoc/tests/arc.rs
++++ b/src/liballoc/tests/arc.rs
+@@ -1,4 +1,4 @@
+-#![cfg(not(miri))]
++#![cfg(not(miri))] // FIXME waiting for fat ptr eq to be fixed
+ 
+ use std::any::Any;
+ use std::sync::{Arc, Weak};
+diff --git a/src/liballoc/tests/binary_heap.rs b/src/liballoc/tests/binary_heap.rs
+index c1a1c5d887..1d4a3edc1a 100644
+--- a/src/liballoc/tests/binary_heap.rs
++++ b/src/liballoc/tests/binary_heap.rs
+@@ -282,7 +282,7 @@ fn assert_covariance() {
+ //
+ // Destructors must be called exactly once per element.
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn panic_safe() {
+     static DROP_COUNTER: AtomicUsize = AtomicUsize::new(0);
+ 
+diff --git a/src/liballoc/tests/btree/map.rs b/src/liballoc/tests/btree/map.rs
+index aaf5040732..f14750089c 100644
+--- a/src/liballoc/tests/btree/map.rs
++++ b/src/liballoc/tests/btree/map.rs
+@@ -9,7 +9,10 @@ use super::DeterministicRng;
+ #[test]
+ fn test_basic_large() {
+     let mut map = BTreeMap::new();
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 10000;
++    #[cfg(miri)]
++    let size = 200;
+     assert_eq!(map.len(), 0);
+ 
+     for i in 0..size {
+@@ -69,7 +72,10 @@ fn test_basic_small() {
+ 
+ #[test]
+ fn test_iter() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 10000;
++    #[cfg(miri)]
++    let size = 200;
+ 
+     // Forwards
+     let mut map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+@@ -91,7 +97,10 @@ fn test_iter() {
+ 
+ #[test]
+ fn test_iter_rev() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 10000;
++    #[cfg(miri)]
++    let size = 200;
+ 
+     // Forwards
+     let mut map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+@@ -127,7 +136,10 @@ fn test_values_mut() {
+ 
+ #[test]
+ fn test_iter_mixed() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 10000;
++    #[cfg(miri)]
++    let size = 200;
+ 
+     // Forwards
+     let mut map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+@@ -214,6 +226,7 @@ fn test_range_equal_empty_cases() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_range_equal_excluded() {
+     let map: BTreeMap<_, _> = (0..5).map(|i| (i, i)).collect();
+     map.range((Excluded(2), Excluded(2)));
+@@ -221,6 +234,7 @@ fn test_range_equal_excluded() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_range_backwards_1() {
+     let map: BTreeMap<_, _> = (0..5).map(|i| (i, i)).collect();
+     map.range((Included(3), Included(2)));
+@@ -228,6 +242,7 @@ fn test_range_backwards_1() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_range_backwards_2() {
+     let map: BTreeMap<_, _> = (0..5).map(|i| (i, i)).collect();
+     map.range((Included(3), Excluded(2)));
+@@ -235,6 +250,7 @@ fn test_range_backwards_2() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_range_backwards_3() {
+     let map: BTreeMap<_, _> = (0..5).map(|i| (i, i)).collect();
+     map.range((Excluded(3), Included(2)));
+@@ -242,6 +258,7 @@ fn test_range_backwards_3() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_range_backwards_4() {
+     let map: BTreeMap<_, _> = (0..5).map(|i| (i, i)).collect();
+     map.range((Excluded(3), Excluded(2)));
+@@ -249,7 +266,10 @@ fn test_range_backwards_4() {
+ 
+ #[test]
+ fn test_range_1000() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 1000;
++    #[cfg(miri)]
++    let size = 200;
+     let map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+ 
+     fn test(map: &BTreeMap<u32, u32>, size: u32, min: Bound<&u32>, max: Bound<&u32>) {
+@@ -286,7 +306,10 @@ fn test_range_borrowed_key() {
+ 
+ #[test]
+ fn test_range() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 200;
++    #[cfg(miri)]
++    let size = 30;
+     let map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+ 
+     for i in 0..size {
+@@ -305,7 +328,10 @@ fn test_range() {
+ 
+ #[test]
+ fn test_range_mut() {
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 200;
++    #[cfg(miri)]
++    let size = 30;
+     let mut map: BTreeMap<_, _> = (0..size).map(|i| (i, i)).collect();
+ 
+     for i in 0..size {
+@@ -479,7 +505,10 @@ fn test_bad_zst() {
+ #[test]
+ fn test_clone() {
+     let mut map = BTreeMap::new();
++    #[cfg(not(miri))] // Miri is too slow
+     let size = 100;
++    #[cfg(miri)]
++    let size = 30;
+     assert_eq!(map.len(), 0);
+ 
+     for i in 0..size {
+@@ -631,6 +660,7 @@ create_append_test!(test_append_145, 145);
+ create_append_test!(test_append_170, 170);
+ create_append_test!(test_append_181, 181);
+ create_append_test!(test_append_239, 239);
++#[cfg(not(miri))] // Miri is too slow
+ create_append_test!(test_append_1700, 1700);
+ 
+ fn rand_data(len: usize) -> Vec<(u32, u32)> {
+diff --git a/src/liballoc/tests/btree/mod.rs b/src/liballoc/tests/btree/mod.rs
+index 653b3f5bcb..4c704d0f8c 100644
+--- a/src/liballoc/tests/btree/mod.rs
++++ b/src/liballoc/tests/btree/mod.rs
+@@ -1,5 +1,3 @@
+-#![cfg(not(miri))]
+-
+ mod map;
+ mod set;
+ 
+diff --git a/src/liballoc/tests/heap.rs b/src/liballoc/tests/heap.rs
+index 7bc1aac7c8..c225ebfa96 100644
+--- a/src/liballoc/tests/heap.rs
++++ b/src/liballoc/tests/heap.rs
+@@ -1,5 +1,3 @@
+-#![cfg(not(miri))]
+-
+ use std::alloc::{Global, Alloc, Layout, System};
+ 
+ /// Issue #45955.
+diff --git a/src/liballoc/tests/rc.rs b/src/liballoc/tests/rc.rs
+index 1be01d1a7c..a40e5850b0 100644
+--- a/src/liballoc/tests/rc.rs
++++ b/src/liballoc/tests/rc.rs
+@@ -1,4 +1,4 @@
+-#![cfg(not(miri))]
++#![cfg(not(miri))] // FIXME waiting for fat ptr eq to be fixed
+ 
+ use std::any::Any;
+ use std::rc::{Rc, Weak};
+diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
+index 2a9fdfa932..feba46b0fa 100644
+--- a/src/liballoc/tests/slice.rs
++++ b/src/liballoc/tests/slice.rs
+@@ -1,5 +1,3 @@
+-#![cfg(not(miri))]
+-
+ use std::cell::Cell;
+ use std::cmp::Ordering::{self, Equal, Greater, Less};
+ use std::mem;
+@@ -260,6 +258,7 @@ fn test_swap_remove() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_swap_remove_fail() {
+     let mut v = vec![1];
+     let _ = v.swap_remove(0);
+@@ -391,6 +390,7 @@ fn test_reverse() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri does not support entropy
+ fn test_sort() {
+     let mut rng = thread_rng();
+ 
+@@ -467,6 +467,7 @@ fn test_sort() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri does not support entropy
+ fn test_sort_stability() {
+     for len in (2..25).chain(500..510) {
+         for _ in 0..10 {
+@@ -631,6 +632,7 @@ fn test_insert() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_insert_oob() {
+     let mut a = vec![1, 2, 3];
+     a.insert(4, 5);
+@@ -655,6 +657,7 @@ fn test_remove() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_remove_fail() {
+     let mut a = vec![1];
+     let _ = a.remove(0);
+@@ -936,6 +939,7 @@ fn test_windowsator() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_windowsator_0() {
+     let v = &[1, 2, 3, 4];
+     let _it = v.windows(0);
+@@ -960,6 +964,7 @@ fn test_chunksator() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_chunksator_0() {
+     let v = &[1, 2, 3, 4];
+     let _it = v.chunks(0);
+@@ -984,6 +989,7 @@ fn test_chunks_exactator() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_chunks_exactator_0() {
+     let v = &[1, 2, 3, 4];
+     let _it = v.chunks_exact(0);
+@@ -1008,6 +1014,7 @@ fn test_rchunksator() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_rchunksator_0() {
+     let v = &[1, 2, 3, 4];
+     let _it = v.rchunks(0);
+@@ -1032,6 +1039,7 @@ fn test_rchunks_exactator() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_rchunks_exactator_0() {
+     let v = &[1, 2, 3, 4];
+     let _it = v.rchunks_exact(0);
+@@ -1084,6 +1092,7 @@ fn test_vec_default() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_overflow_does_not_cause_segfault() {
+     let mut v = vec![];
+     v.reserve_exact(!0);
+@@ -1093,6 +1102,7 @@ fn test_overflow_does_not_cause_segfault() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_overflow_does_not_cause_segfault_managed() {
+     let mut v = vec![Rc::new(1)];
+     v.reserve_exact(!0);
+@@ -1268,6 +1278,7 @@ fn test_mut_chunks_rev() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mut_chunks_0() {
+     let mut v = [1, 2, 3, 4];
+     let _it = v.chunks_mut(0);
+@@ -1300,6 +1311,7 @@ fn test_mut_chunks_exact_rev() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mut_chunks_exact_0() {
+     let mut v = [1, 2, 3, 4];
+     let _it = v.chunks_exact_mut(0);
+@@ -1332,6 +1344,7 @@ fn test_mut_rchunks_rev() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mut_rchunks_0() {
+     let mut v = [1, 2, 3, 4];
+     let _it = v.rchunks_mut(0);
+@@ -1364,6 +1377,7 @@ fn test_mut_rchunks_exact_rev() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_mut_rchunks_exact_0() {
+     let mut v = [1, 2, 3, 4];
+     let _it = v.rchunks_exact_mut(0);
+@@ -1397,6 +1411,7 @@ fn test_box_slice_clone() {
+ #[test]
+ #[allow(unused_must_use)] // here, we care about the side effects of `.clone()`
+ #[cfg_attr(target_os = "emscripten", ignore)]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_box_slice_clone_panics() {
+     use std::sync::Arc;
+     use std::sync::atomic::{AtomicUsize, Ordering};
+@@ -1461,6 +1476,7 @@ fn test_copy_from_slice() {
+ 
+ #[test]
+ #[should_panic(expected = "destination and source slices have different lengths")]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_copy_from_slice_dst_longer() {
+     let src = [0, 1, 2, 3];
+     let mut dst = [0; 5];
+@@ -1469,6 +1485,7 @@ fn test_copy_from_slice_dst_longer() {
+ 
+ #[test]
+ #[should_panic(expected = "destination and source slices have different lengths")]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_copy_from_slice_dst_shorter() {
+     let src = [0, 1, 2, 3];
+     let mut dst = [0; 3];
+@@ -1588,6 +1605,7 @@ thread_local!(static SILENCE_PANIC: Cell<bool> = Cell::new(false));
+ 
+ #[test]
+ #[cfg_attr(target_os = "emscripten", ignore)] // no threads
++#[cfg(not(miri))] // Miri does not support panics
+ fn panic_safe() {
+     let prev = panic::take_hook();
+     panic::set_hook(Box::new(move |info| {
+diff --git a/src/liballoc/tests/str.rs b/src/liballoc/tests/str.rs
+index a1dc763f6d..b33a564218 100644
+--- a/src/liballoc/tests/str.rs
++++ b/src/liballoc/tests/str.rs
+@@ -31,7 +31,6 @@ fn test_rfind() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
+ fn test_collect() {
+     let empty = "";
+     let s: String = empty.chars().collect();
+@@ -119,7 +118,6 @@ fn test_concat_for_different_types() {
+ #[test]
+ fn test_concat_for_different_lengths() {
+     let empty: &[&str] = &[];
+-    #[cfg(not(miri))]
+     test_concat!("", empty);
+     test_concat!("a", ["a"]);
+     test_concat!("ab", ["a", "b"]);
+@@ -148,7 +146,6 @@ fn test_join_for_different_types() {
+ #[test]
+ fn test_join_for_different_lengths() {
+     let empty: &[&str] = &[];
+-    #[cfg(not(miri))]
+     test_join!("", empty, "-");
+     test_join!("a", ["a"], "-");
+     test_join!("a-b", ["a", "b"], "-");
+@@ -162,7 +159,6 @@ fn test_join_for_different_lengths_with_long_separator() {
+     assert_eq!("～～～～～".len(), 15);
+ 
+     let empty: &[&str] = &[];
+-    #[cfg(not(miri))]
+     test_join!("", empty, "～～～～～");
+     test_join!("a", ["a"], "～～～～～");
+     test_join!("a～～～～～b", ["a", "b"], "～～～～～");
+@@ -170,7 +166,7 @@ fn test_join_for_different_lengths_with_long_separator() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn test_unsafe_slice() {
+     assert_eq!("ab", unsafe {"abc".get_unchecked(0..2)});
+     assert_eq!("bc", unsafe {"abc".get_unchecked(1..3)});
+@@ -243,7 +239,6 @@ fn test_replacen() {
+ #[test]
+ fn test_replace() {
+     let a = "a";
+-    #[cfg(not(miri))]
+     assert_eq!("".replace(a, "b"), "");
+     assert_eq!("a".replace(a, "b"), "b");
+     assert_eq!("ab".replace(a, "b"), "bb");
+@@ -303,7 +298,6 @@ fn test_replace_pattern() {
+ // The current implementation of SliceIndex fails to handle methods
+ // orthogonally from range types; therefore, it is worth testing
+ // all of the indexing operations on each input.
+-#[cfg(not(miri))]
+ mod slice_index {
+     // Test a slicing operation **that should succeed,**
+     // testing it on all of the indexing methods.
+@@ -357,6 +351,7 @@ mod slice_index {
+     //  to be used in `should_panic`)
+     #[test]
+     #[should_panic(expected = "out of bounds")]
++    #[cfg(not(miri))] // Miri does not support panics
+     fn assert_range_eq_can_fail_by_panic() {
+         assert_range_eq!("abc", 0..5, "abc");
+     }
+@@ -366,6 +361,7 @@ mod slice_index {
+     //  to be used in `should_panic`)
+     #[test]
+     #[should_panic(expected = "==")]
++    #[cfg(not(miri))] // Miri does not support panics
+     fn assert_range_eq_can_fail_by_inequality() {
+         assert_range_eq!("abc", 0..2, "abc");
+     }
+@@ -413,6 +409,7 @@ mod slice_index {
+ 
+                 #[test]
+                 #[should_panic(expected = $expect_msg)]
++                #[cfg(not(miri))] // Miri does not support panics
+                 fn index_fail() {
+                     let v: String = $data.into();
+                     let v: &str = &v;
+@@ -421,6 +418,7 @@ mod slice_index {
+ 
+                 #[test]
+                 #[should_panic(expected = $expect_msg)]
++                #[cfg(not(miri))] // Miri does not support panics
+                 fn index_mut_fail() {
+                     let mut v: String = $data.into();
+                     let v: &mut str = &mut v;
+@@ -490,6 +488,7 @@ mod slice_index {
+ 
+     #[test]
+     #[cfg(not(target_arch = "asmjs"))] // hits an OOM
++    #[cfg(not(miri))] // Miri is too slow
+     fn simple_big() {
+         fn a_million_letter_x() -> String {
+             let mut i = 0;
+@@ -515,6 +514,7 @@ mod slice_index {
+ 
+     #[test]
+     #[should_panic]
++    #[cfg(not(miri))] // Miri does not support panics
+     fn test_slice_fail() {
+         &"中华Việt Nam"[0..2];
+     }
+@@ -666,12 +666,14 @@ mod slice_index {
+     // check the panic includes the prefix of the sliced string
+     #[test]
+     #[should_panic(expected="byte index 1024 is out of bounds of `Lorem ipsum dolor sit amet")]
++    #[cfg(not(miri))] // Miri does not support panics
+     fn test_slice_fail_truncated_1() {
+         &LOREM_PARAGRAPH[..1024];
+     }
+     // check the truncation in the panic message
+     #[test]
+     #[should_panic(expected="luctus, im`[...]")]
++    #[cfg(not(miri))] // Miri does not support panics
+     fn test_slice_fail_truncated_2() {
+         &LOREM_PARAGRAPH[..1024];
+     }
+@@ -686,7 +688,7 @@ fn test_str_slice_rangetoinclusive_ok() {
+ 
+ #[test]
+ #[should_panic]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_str_slice_rangetoinclusive_notok() {
+     let s = "abcαβγ";
+     &s[..=3];
+@@ -702,7 +704,7 @@ fn test_str_slicemut_rangetoinclusive_ok() {
+ 
+ #[test]
+ #[should_panic]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_str_slicemut_rangetoinclusive_notok() {
+     let mut s = "abcαβγ".to_owned();
+     let s: &mut str = &mut s;
+@@ -892,7 +894,7 @@ fn test_as_bytes() {
+ 
+ #[test]
+ #[should_panic]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_as_bytes_fail() {
+     // Don't double free. (I'm not sure if this exercises the
+     // original problem code path anymore.)
+@@ -982,7 +984,7 @@ fn test_split_at_mut() {
+ 
+ #[test]
+ #[should_panic]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_split_at_boundscheck() {
+     let s = "ศไทย中华Việt Nam";
+     s.split_at(1);
+@@ -1078,7 +1080,7 @@ fn test_rev_iterator() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn test_chars_decoding() {
+     let mut bytes = [0; 4];
+     for c in (0..0x110000).filter_map(std::char::from_u32) {
+@@ -1090,7 +1092,7 @@ fn test_chars_decoding() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn test_chars_rev_decoding() {
+     let mut bytes = [0; 4];
+     for c in (0..0x110000).filter_map(std::char::from_u32) {
+@@ -1320,7 +1322,6 @@ fn test_splitator() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
+ fn test_str_default() {
+     use std::default::Default;
+ 
+@@ -1380,7 +1381,7 @@ fn test_bool_from_str() {
+     assert_eq!("not even a boolean".parse::<bool>().ok(), None);
+ }
+ 
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn check_contains_all_substrings(s: &str) {
+     assert!(s.contains(""));
+     for i in 0..s.len() {
+@@ -1391,7 +1392,7 @@ fn check_contains_all_substrings(s: &str) {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn strslice_issue_16589() {
+     assert!("bananas".contains("nana"));
+ 
+@@ -1401,7 +1402,6 @@ fn strslice_issue_16589() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
+ fn strslice_issue_16878() {
+     assert!(!"1234567ah012345678901ah".contains("hah"));
+     assert!(!"00abc01234567890123456789abc".contains("bcabc"));
+@@ -1409,7 +1409,7 @@ fn strslice_issue_16878() {
+ 
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri is too slow
+ fn test_strslice_contains() {
+     let x = "There are moments, Jeeves, when one asks oneself, 'Do trousers matter?'";
+     check_contains_all_substrings(x);
+@@ -1547,7 +1547,6 @@ fn trim_ws() {
+ 
+ #[test]
+ fn to_lowercase() {
+-    #[cfg(not(miri))]
+     assert_eq!("".to_lowercase(), "");
+     assert_eq!("AÉǅaé ".to_lowercase(), "aéǆaé ");
+ 
+@@ -1581,7 +1580,6 @@ fn to_lowercase() {
+ 
+ #[test]
+ fn to_uppercase() {
+-    #[cfg(not(miri))]
+     assert_eq!("".to_uppercase(), "");
+     assert_eq!("aéǅßﬁᾀ".to_uppercase(), "AÉǄSSFIἈΙ");
+ }
+@@ -1613,7 +1611,6 @@ fn test_cow_from() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
+ fn test_repeat() {
+     assert_eq!("".repeat(3), "");
+     assert_eq!("abc".repeat(0), "");
+diff --git a/src/liballoc/tests/string.rs b/src/liballoc/tests/string.rs
+index e6ca54c408..7e93d84fe3 100644
+--- a/src/liballoc/tests/string.rs
++++ b/src/liballoc/tests/string.rs
+@@ -1,5 +1,3 @@
+-#![cfg(not(miri))]
+-
+ use std::borrow::Cow;
+ use std::collections::CollectionAllocErr::*;
+ use std::mem::size_of;
+@@ -233,6 +231,7 @@ fn test_split_off_empty() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_split_off_past_end() {
+     let orig = "Hello, world!";
+     let mut split = String::from(orig);
+@@ -241,6 +240,7 @@ fn test_split_off_past_end() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_split_off_mid_char() {
+     let mut orig = String::from("山");
+     orig.split_off(1);
+@@ -289,6 +289,7 @@ fn test_str_truncate_invalid_len() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_str_truncate_split_codepoint() {
+     let mut s = String::from("\u{FC}"); // ü
+     s.truncate(1);
+@@ -323,6 +324,7 @@ fn remove() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn remove_bad() {
+     "ศ".to_string().remove(1);
+ }
+@@ -358,11 +360,13 @@ fn insert() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn insert_bad1() {
+     "".to_string().insert(1, 't');
+ }
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn insert_bad2() {
+     "ệ".to_string().insert(1, 't');
+ }
+@@ -443,6 +447,7 @@ fn test_replace_range() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_replace_range_char_boundary() {
+     let mut s = "Hello, 世界!".to_owned();
+     s.replace_range(..8, "");
+@@ -459,6 +464,7 @@ fn test_replace_range_inclusive_range() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_replace_range_out_of_bounds() {
+     let mut s = String::from("12345");
+     s.replace_range(5..6, "789");
+@@ -466,6 +472,7 @@ fn test_replace_range_out_of_bounds() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_replace_range_inclusive_out_of_bounds() {
+     let mut s = String::from("12345");
+     s.replace_range(5..=5, "789");
+@@ -525,6 +532,7 @@ fn test_reserve_exact() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri does not support signalling OOM
+ fn test_try_reserve() {
+ 
+     // These are the interesting cases:
+@@ -602,6 +610,7 @@ fn test_try_reserve() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri does not support signalling OOM
+ fn test_try_reserve_exact() {
+ 
+     // This is exactly the same as test_try_reserve with the method changed.
+diff --git a/src/liballoc/tests/vec.rs b/src/liballoc/tests/vec.rs
+index 545332bcd6..6e4ca1d90e 100644
+--- a/src/liballoc/tests/vec.rs
++++ b/src/liballoc/tests/vec.rs
+@@ -368,6 +368,7 @@ fn test_vec_truncate_drop() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_vec_truncate_fail() {
+     struct BadElem(i32);
+     impl Drop for BadElem {
+@@ -391,6 +392,7 @@ fn test_index() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_index_out_of_bounds() {
+     let vec = vec![1, 2, 3];
+     let _ = vec[3];
+@@ -398,6 +400,7 @@ fn test_index_out_of_bounds() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_slice_out_of_bounds_1() {
+     let x = vec![1, 2, 3, 4, 5];
+     &x[!0..];
+@@ -405,6 +408,7 @@ fn test_slice_out_of_bounds_1() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_slice_out_of_bounds_2() {
+     let x = vec![1, 2, 3, 4, 5];
+     &x[..6];
+@@ -412,6 +416,7 @@ fn test_slice_out_of_bounds_2() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_slice_out_of_bounds_3() {
+     let x = vec![1, 2, 3, 4, 5];
+     &x[!0..4];
+@@ -419,6 +424,7 @@ fn test_slice_out_of_bounds_3() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_slice_out_of_bounds_4() {
+     let x = vec![1, 2, 3, 4, 5];
+     &x[1..6];
+@@ -426,6 +432,7 @@ fn test_slice_out_of_bounds_4() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_slice_out_of_bounds_5() {
+     let x = vec![1, 2, 3, 4, 5];
+     &x[3..2];
+@@ -433,6 +440,7 @@ fn test_slice_out_of_bounds_5() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_swap_remove_empty() {
+     let mut vec = Vec::<i32>::new();
+     vec.swap_remove(0);
+@@ -503,6 +511,7 @@ fn test_drain_items_zero_sized() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_drain_out_of_bounds() {
+     let mut v = vec![1, 2, 3, 4, 5];
+     v.drain(5..6);
+@@ -576,6 +585,7 @@ fn test_drain_max_vec_size() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_drain_inclusive_out_of_bounds() {
+     let mut v = vec![1, 2, 3, 4, 5];
+     v.drain(5..=5);
+@@ -605,6 +615,7 @@ fn test_splice_inclusive_range() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_splice_out_of_bounds() {
+     let mut v = vec![1, 2, 3, 4, 5];
+     let a = [10, 11, 12];
+@@ -613,6 +624,7 @@ fn test_splice_out_of_bounds() {
+ 
+ #[test]
+ #[should_panic]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_splice_inclusive_out_of_bounds() {
+     let mut v = vec![1, 2, 3, 4, 5];
+     let a = [10, 11, 12];
+diff --git a/src/liballoc/tests/vec_deque.rs b/src/liballoc/tests/vec_deque.rs
+index b47e7c867e..e0cb0e7a9e 100644
+--- a/src/liballoc/tests/vec_deque.rs
++++ b/src/liballoc/tests/vec_deque.rs
+@@ -108,7 +108,7 @@ fn test_index() {
+ 
+ #[test]
+ #[should_panic]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support panics
+ fn test_index_out_of_bounds() {
+     let mut deq = VecDeque::new();
+     for i in 1..4 {
+@@ -907,24 +907,20 @@ fn test_append() {
+     // normal append
+     a.append(&mut b);
+     assert_eq!(a.iter().cloned().collect::<Vec<_>>(), [1, 2, 3, 4, 5, 6]);
+-    #[cfg(not(miri))]
+     assert_eq!(b.iter().cloned().collect::<Vec<_>>(), []);
+ 
+     // append nothing to something
+     a.append(&mut b);
+     assert_eq!(a.iter().cloned().collect::<Vec<_>>(), [1, 2, 3, 4, 5, 6]);
+-    #[cfg(not(miri))]
+     assert_eq!(b.iter().cloned().collect::<Vec<_>>(), []);
+ 
+     // append something to nothing
+     b.append(&mut a);
+     assert_eq!(b.iter().cloned().collect::<Vec<_>>(), [1, 2, 3, 4, 5, 6]);
+-    #[cfg(not(miri))]
+     assert_eq!(a.iter().cloned().collect::<Vec<_>>(), []);
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
+ fn test_append_permutations() {
+     fn construct_vec_deque(
+         push_back: usize,
+@@ -948,7 +944,10 @@ fn test_append_permutations() {
+         out
+     }
+ 
++    #[cfg(not(miri))] // Miri is too slow
+     const MAX: usize = 5;
++    #[cfg(miri)]
++    const MAX: usize = 3;
+ 
+     // Many different permutations of both the `VecDeque` getting appended to
+     // and the one getting appended are generated to check `append`.
+@@ -1125,7 +1124,7 @@ fn test_reserve_exact_2() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support signalling OOM
+ fn test_try_reserve() {
+ 
+     // These are the interesting cases:
+@@ -1227,7 +1226,7 @@ fn test_try_reserve() {
+ }
+ 
+ #[test]
+-#[cfg(not(miri))]
++#[cfg(not(miri))] // Miri does not support signalling OOM
+ fn test_try_reserve_exact() {
+ 
+     // This is exactly the same as test_try_reserve with the method changed.
+diff --git a/src/libcore/slice/mod.rs b/src/libcore/slice/mod.rs
+index acca974837..7bc1bd6d16 100644
+--- a/src/libcore/slice/mod.rs
++++ b/src/libcore/slice/mod.rs
+@@ -5021,8 +5021,11 @@ impl<A> SlicePartialEq<A> for [A]
+         if self.len() != other.len() {
+             return false;
+         }
+-        if self.as_ptr() == other.as_ptr() {
+-            return true;
++        #[cfg(not(miri))] // FIXME Miri is not happy about this ptr comparison when empty slices are involved, so we skip it
++        {
++            if self.as_ptr() == other.as_ptr() {
++                return true;
++            }
+         }
+         unsafe {
+             let size = mem::size_of_val(self);
 diff --git a/src/libcore/tests/cell.rs b/src/libcore/tests/cell.rs
 index 73bdaab586..b16416022c 100644
 --- a/src/libcore/tests/cell.rs
@@ -104,15 +1052,29 @@ index 73bdaab586..b16416022c 100644
      let x = RefCell::new(0);
      let _b = x.borrow();
 diff --git a/src/libcore/tests/fmt/mod.rs b/src/libcore/tests/fmt/mod.rs
-index b10b63fc48..3baa445e65 100644
+index b10b63fc48..df1deeaeb9 100644
 --- a/src/libcore/tests/fmt/mod.rs
 +++ b/src/libcore/tests/fmt/mod.rs
-@@ -1,4 +1,4 @@
+@@ -1,10 +1,9 @@
 -#![cfg(not(miri))]
-+#![cfg(not(miri))] // FIXME: A bug in Miri breaks padding in string formatting
- 
+-
  mod builders;
  mod float;
+ mod num;
+ 
+ #[test]
++#[cfg(not(miri))] // Miri cannot print pointers
+ fn test_format_flags() {
+     // No residual flags left by pointer formatting
+     let p = "".as_ptr();
+@@ -14,6 +13,7 @@ fn test_format_flags() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri cannot print pointers
+ fn test_pointer_formats_data_pointer() {
+     let b: &[u8] = b"";
+     let s: &str = "";
 diff --git a/src/libcore/tests/hash/mod.rs b/src/libcore/tests/hash/mod.rs
 index bf3039a7e5..1000088e6b 100644
 --- a/src/libcore/tests/hash/mod.rs
@@ -136,7 +1098,7 @@ index bf3039a7e5..1000088e6b 100644
  }
  
 diff --git a/src/libcore/tests/iter.rs b/src/libcore/tests/iter.rs
-index 9b4c78f8d3..51b0356b0f 100644
+index 51a6017de1..9b76a4af98 100644
 --- a/src/libcore/tests/iter.rs
 +++ b/src/libcore/tests/iter.rs
 @@ -190,7 +190,6 @@ fn test_iterator_step_by() {
@@ -188,17 +1150,7 @@ index 9b4c78f8d3..51b0356b0f 100644
  fn test_range_step() {
      #![allow(deprecated)]
  
-@@ -1665,7 +1661,9 @@ fn test_range_step() {
-     assert_eq!((1..21).rev().step_by(5).collect::<Vec<isize>>(), [20, 15, 10, 5]);
-     assert_eq!((1..21).rev().step_by(6).collect::<Vec<isize>>(), [20, 14, 8, 2]);
-     assert_eq!((200..255).step_by(50).collect::<Vec<u8>>(), [200, 250]);
-+    #[cfg(not(miri))] // Miri cannot compare empty slices
-     assert_eq!((200..-5).step_by(1).collect::<Vec<isize>>(), []);
-+    #[cfg(not(miri))] // Miri cannot compare empty slices
-     assert_eq!((200..200).step_by(1).collect::<Vec<isize>>(), []);
- 
-     assert_eq!((0..20).step_by(1).size_hint(), (20, Some(20)));
-@@ -1681,7 +1679,6 @@ fn test_range_step() {
+@@ -1681,7 +1677,6 @@ fn test_range_step() {
  }
  
  #[test]
@@ -206,7 +1158,7 @@ index 9b4c78f8d3..51b0356b0f 100644
  fn test_step_by_skip() {
      assert_eq!((0..640).step_by(128).skip(1).collect::<Vec<_>>(), [128, 256, 384, 512]);
      assert_eq!((0..=50).step_by(10).nth(3), Some(30));
-@@ -1689,7 +1686,6 @@ fn test_step_by_skip() {
+@@ -1689,7 +1684,6 @@ fn test_step_by_skip() {
  }
  
  #[test]
@@ -604,7 +1556,7 @@ index 04d646ea01..31d16e0e32 100644
      let mut bytes = *b"Hello, World!";
      // 2 is greater than 1, so this range is invalid.
 diff --git a/src/libcore/tests/time.rs b/src/libcore/tests/time.rs
-index d39bd06930..f7d00304df 100644
+index d39bd06930..09aae45834 100644
 --- a/src/libcore/tests/time.rs
 +++ b/src/libcore/tests/time.rs
 @@ -1,5 +1,3 @@
@@ -628,11 +1580,3 @@ index d39bd06930..f7d00304df 100644
  fn sub_bad2() {
      let _ = Duration::new(0, 0) - Duration::new(1, 0);
  }
-@@ -287,6 +287,7 @@ fn debug_formatting_precision_two() {
- }
- 
- #[test]
-+#[cfg(not(miri))] // FIXME: A bug in Miri breaks padding in string formatting
- fn debug_formatting_precision_high() {
-     assert_eq!(format!("{:.5?}",  Duration::new(0, 23_678)), "23.67800µs");
- 
