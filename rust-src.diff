@@ -129,15 +129,15 @@ index eb0667228d..1cdf4fdd2d 100644
  }
  
 diff --git a/src/liballoc/tests/arc.rs b/src/liballoc/tests/arc.rs
-index 7c5a892612..5646708d32 100644
+index 7c5a892612..2759b1b1ca 100644
 --- a/src/liballoc/tests/arc.rs
 +++ b/src/liballoc/tests/arc.rs
-@@ -1,4 +1,4 @@
+@@ -1,5 +1,3 @@
 -#![cfg(not(miri))]
-+#![cfg(not(miri))] // FIXME waiting for fat ptr eq to be fixed
- 
+-
  use std::any::Any;
  use std::sync::{Arc, Weak};
+ use std::cell::RefCell;
 diff --git a/src/liballoc/tests/binary_heap.rs b/src/liballoc/tests/binary_heap.rs
 index c1a1c5d887..1d4a3edc1a 100644
 --- a/src/liballoc/tests/binary_heap.rs
@@ -312,15 +312,15 @@ index 7bc1aac7c8..c225ebfa96 100644
  
  /// Issue #45955.
 diff --git a/src/liballoc/tests/rc.rs b/src/liballoc/tests/rc.rs
-index 1be01d1a7c..a40e5850b0 100644
+index 1be01d1a7c..18f82e8041 100644
 --- a/src/liballoc/tests/rc.rs
 +++ b/src/liballoc/tests/rc.rs
-@@ -1,4 +1,4 @@
+@@ -1,5 +1,3 @@
 -#![cfg(not(miri))]
-+#![cfg(not(miri))] // FIXME waiting for fat ptr eq to be fixed
- 
+-
  use std::any::Any;
  use std::rc::{Rc, Weak};
+ use std::cell::RefCell;
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
 index 2a9fdfa932..feba46b0fa 100644
 --- a/src/liballoc/tests/slice.rs
