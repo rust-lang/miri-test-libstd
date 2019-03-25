@@ -21,10 +21,8 @@ before_script:
 # install Rust
 - curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"
 - export PATH=$HOME/.cargo/bin:$PATH
-- rustup component add rust-src
+- rustup component add rust-src miri
 - rustc --version
-# install Miri
-- cargo install --force --git https://github.com/solson/miri miri
 
 script:
 - ./travis.sh
