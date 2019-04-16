@@ -28,4 +28,4 @@ ln -s $RUST_SRC rust-src
 
 cd lib$CRATE
 XARGO_RUST_SRC=$RUST_SRC cargo miri setup
-MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- -- -Zunstable-options --exclude-should-panic "$@"
+MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- -Zmiri-seed=cafedead -- -Zunstable-options --exclude-should-panic "$@"
