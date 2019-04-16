@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+#set -x
 
 ## Run a Rust libstd test suite with Miri.
 ## Assumes Miri to be installed.
@@ -9,13 +10,17 @@ set -euo pipefail
 ##   RUST_SRC: The path to the Rust source directory (where libstd etc. are).
 ##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust/src`.
 
-RUST_SRC=$(readlink -e ${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/src})
 CRATE=${1:-}
-shift
-
 if [[ -z "$CRATE" ]]; then
     echo "Usage: $0 CRATE_NAME"
     exit 1
+fi
+shift
+
+RUST_SRC=$(readlink -m ${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/src})
+if ! test -d "$RUST_SRC"; then
+   echo "Rust source dir ($RUST_SRC) does not exist"
+   exit 1
 fi
 
 rm -f rust-src
