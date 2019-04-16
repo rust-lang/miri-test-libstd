@@ -1,8 +1,8 @@
 diff --git a/src/libcore/slice/mod.rs b/src/libcore/slice/mod.rs
-index d89443662d..0e62dcd106 100644
+index 122ef9c79c..59e0dfa57b 100644
 --- a/src/libcore/slice/mod.rs
 +++ b/src/libcore/slice/mod.rs
-@@ -5025,8 +5025,11 @@ impl<A> SlicePartialEq<A> for [A]
+@@ -5213,8 +5213,11 @@ impl<A> SlicePartialEq<A> for [A]
          if self.len() != other.len() {
              return false;
          }
