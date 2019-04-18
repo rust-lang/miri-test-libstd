@@ -8,7 +8,7 @@ set -euo pipefail
 ##   ./run-test.sh CRATE_NAME
 ## Environment variables:
 ##   RUST_SRC: The path to the Rust source directory (where libstd etc. are).
-##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust/src`.
+##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust`.
 
 CRATE=${1:-}
 if [[ -z "$CRATE" ]]; then
@@ -17,15 +17,18 @@ if [[ -z "$CRATE" ]]; then
 fi
 shift
 
-RUST_SRC=$(readlink -m ${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/src})
+RUST_SRC=${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust}
 if ! test -d "$RUST_SRC"; then
    echo "Rust source dir ($RUST_SRC) does not exist"
    exit 1
 fi
+RUST_SRC=$(readlink -e "$RUST_SRC")
 
-rm -f rust-src
-ln -s $RUST_SRC rust-src
+# update symlink
+rm -f lib$CRATE
+ln -s "$RUST_SRC"/src/lib$CRATE lib$CRATE
 
-cd lib$CRATE
-XARGO_RUST_SRC=$RUST_SRC cargo miri setup
+# run test
+cd ${CRATE}_miri_test
+XARGO_RUST_SRC="$RUST_SRC/src" cargo miri setup
 MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- -Zmiri-seed=cafedead -- -Zunstable-options --exclude-should-panic "$@"

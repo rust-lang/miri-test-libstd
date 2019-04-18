@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "libcore",
-  "liballoc",
+  "core_miri_test",
+  "alloc_miri_test",
 ]

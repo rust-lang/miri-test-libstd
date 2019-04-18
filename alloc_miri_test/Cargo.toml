@@ -1,20 +1,23 @@
 [package]
 authors = ["The Rust Project Developers"]
-name = "coretest"
+name = "alloc_miri_test"
 version = "0.0.0"
 autotests = false
 autobenches = false
 edition = "2018"
 
 [lib]
-name = "coretest"
-path = "lib.rs"
+name = "alloc_miri_test"
+path = "../liballoc/lib.rs"
 test = false
 bench = false
 
-[[test]]
-name = "coretests"
-path = "../rust-src/libcore/tests/lib.rs"
+[dependencies]
 
 [dev-dependencies]
 rand = "0.6"
+rand_xorshift = "0.1"
+
+[[test]]
+name = "collectionstests"
+path = "../liballoc/tests/lib.rs"

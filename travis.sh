@@ -7,6 +7,6 @@ cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 ( cd rust-src-patched && patch -f -p1 < ../rust-src.diff )
 
 # run the tests
-export RUST_SRC=rust-src-patched/src
+export RUST_SRC=rust-src-patched
 ./run-test.sh core
 ./run-test.sh alloc
