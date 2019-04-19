@@ -1,0 +1,12 @@
+diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
+index ad2cd7c95e..b73316face 100644
+--- a/src/liballoc/tests/slice.rs
++++ b/src/liballoc/tests/slice.rs
+@@ -466,6 +466,7 @@ fn test_sort() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // FIXME rand seems to perform invalid memory accesses
+ fn test_sort_stability() {
+     #[cfg(not(miri))] // Miri is too slow
+     let large_range = 500..510;
