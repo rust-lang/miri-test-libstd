@@ -1,80 +1,8 @@
-diff --git a/src/liballoc/alloc.rs b/src/liballoc/alloc.rs
-index f3877e51a6..ddc6481eec 100644
---- a/src/liballoc/alloc.rs
-+++ b/src/liballoc/alloc.rs
-@@ -252,6 +252,7 @@ mod tests {
-     }
- 
-     #[bench]
-+    #[cfg(not(miri))] // Miri does not support benchmarks
-     fn alloc_owned_small(b: &mut Bencher) {
-         b.iter(|| {
-             let _: Box<_> = box 10;
-diff --git a/src/liballoc/collections/linked_list.rs b/src/liballoc/collections/linked_list.rs
-index d6d84a4f08..d8d11e74df 100644
---- a/src/liballoc/collections/linked_list.rs
-+++ b/src/liballoc/collections/linked_list.rs
-@@ -1325,6 +1325,7 @@ mod tests {
-     }
- 
-     #[test]
-+    #[cfg(not(miri))] // FIXME: Miri fails, see https://github.com/rust-lang/rust/pull/60072.
-     fn test_insert_prev() {
-         let mut m = list_from(&[0, 2, 4, 6, 8]);
-         let len = m.len();
-@@ -1354,6 +1355,7 @@ mod tests {
- 
-     #[test]
-     #[cfg_attr(target_os = "emscripten", ignore)]
-+    #[cfg(not(miri))] // Miri does not support threads
-     fn test_send() {
-         let n = list_from(&[1, 2, 3]);
-         thread::spawn(move || {
-@@ -1371,6 +1373,7 @@ mod tests {
-         for _ in 0..25 {
-             fuzz_test(3);
-             fuzz_test(16);
-+            #[cfg(not(miri))] // Miri is too slow
-             fuzz_test(189);
-         }
-     }
 diff --git a/src/liballoc/collections/vec_deque.rs b/src/liballoc/collections/vec_deque.rs
-index 4bea615ab8..96f6ddab3d 100644
+index d806bd0b1d..96f6ddab3d 100644
 --- a/src/liballoc/collections/vec_deque.rs
 +++ b/src/liballoc/collections/vec_deque.rs
-@@ -2799,6 +2799,7 @@ mod tests {
-     use super::VecDeque;
- 
-     #[bench]
-+    #[cfg(not(miri))] // Miri does not support benchmarks
-     fn bench_push_back_100(b: &mut test::Bencher) {
-         let mut deq = VecDeque::with_capacity(101);
-         b.iter(|| {
-@@ -2811,6 +2812,7 @@ mod tests {
-     }
- 
-     #[bench]
-+    #[cfg(not(miri))] // Miri does not support benchmarks
-     fn bench_push_front_100(b: &mut test::Bencher) {
-         let mut deq = VecDeque::with_capacity(101);
-         b.iter(|| {
-@@ -2823,6 +2825,7 @@ mod tests {
-     }
- 
-     #[bench]
-+    #[cfg(not(miri))] // Miri does not support benchmarks
-     fn bench_pop_back_100(b: &mut test::Bencher) {
-         let mut deq = VecDeque::<i32>::with_capacity(101);
- 
-@@ -2836,6 +2839,7 @@ mod tests {
-     }
- 
-     #[bench]
-+    #[cfg(not(miri))] // Miri does not support benchmarks
-     fn bench_pop_front_100(b: &mut test::Bencher) {
-         let mut deq = VecDeque::<i32>::with_capacity(101);
- 
-@@ -2964,6 +2968,7 @@ mod tests {
+@@ -2968,6 +2968,7 @@ mod tests {
      }
  
      #[test]
@@ -82,40 +10,6 @@ index 4bea615ab8..96f6ddab3d 100644
      fn test_drain() {
          let mut tester: VecDeque<usize> = VecDeque::with_capacity(7);
  
-@@ -3103,7 +3108,12 @@ mod tests {
-             assert!(vec.into_iter().eq(vd));
-         }
- 
--        for cap_pwr in 0..7 {
-+        #[cfg(not(miri))] // Miri is too slow
-+        let max_pwr = 7;
-+        #[cfg(miri)]
-+        let max_pwr = 5;
-+
-+        for cap_pwr in 0..max_pwr {
-             // Make capacity as a (2^x)-1, so that the ring size is 2^x
-             let cap = (2i32.pow(cap_pwr) - 1) as usize;
- 
-diff --git a/src/liballoc/sync.rs b/src/liballoc/sync.rs
-index b7d7995b54..466e806663 100644
---- a/src/liballoc/sync.rs
-+++ b/src/liballoc/sync.rs
-@@ -1678,6 +1678,7 @@ mod tests {
- 
-     #[test]
-     #[cfg_attr(target_os = "emscripten", ignore)]
-+    #[cfg(not(miri))] // Miri does not support threads
-     fn manually_share_arc() {
-         let v = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-         let arc_v = Arc::new(v);
-@@ -1982,6 +1983,7 @@ mod tests {
- 
-     #[test]
-     #[cfg_attr(target_os = "emscripten", ignore)]
-+    #[cfg(not(miri))] // Miri does not support threads
-     fn test_weak_count_locked() {
-         let mut a = Arc::new(atomic::AtomicBool::new(false));
-         let a2 = a.clone();
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
 index ad2cd7c95e..23a18c7ee0 100644
 --- a/src/liballoc/tests/slice.rs
