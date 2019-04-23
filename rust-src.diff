@@ -22,3 +22,16 @@ index ad2cd7c95e..23a18c7ee0 100644
  fn test_sort_stability() {
      #[cfg(not(miri))] // Miri is too slow
      let large_range = 500..510;
+diff --git a/src/libcore/tests/lib.rs b/src/libcore/tests/lib.rs
+index 2e4a8a15d2..f168458bff 100644
+--- a/src/libcore/tests/lib.rs
++++ b/src/libcore/tests/lib.rs
+@@ -32,7 +32,7 @@
+ #![feature(slice_partition_dedup)]
+ #![feature(copy_within)]
+ #![feature(int_error_matching)]
+-#![deny(rust_2018_idioms)]
++#![warn(rust_2018_idioms)]
+ 
+ extern crate test;
+ 
