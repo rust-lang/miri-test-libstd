@@ -7,7 +7,7 @@ set -euo pipefail
 ## Usage:
 ##   ./run-test.sh CRATE_NAME
 ## Environment variables:
-##   RUST_SRC: The path to the Rust source directory (where libstd etc. are).
+##   RUST_SRC: The path to the Rust source directory (containing `src`).
 ##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust`.
 
 CRATE=${1:-}
