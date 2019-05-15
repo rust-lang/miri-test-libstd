@@ -1,8 +1,8 @@
 diff --git a/src/liballoc/collections/vec_deque.rs b/src/liballoc/collections/vec_deque.rs
-index d806bd0b1d..96f6ddab3d 100644
+index 9a8d48083e..62f3fcf1ef 100644
 --- a/src/liballoc/collections/vec_deque.rs
 +++ b/src/liballoc/collections/vec_deque.rs
-@@ -2968,6 +2968,7 @@ mod tests {
+@@ -2984,6 +2984,7 @@ mod tests {
      }
  
      #[test]
@@ -22,16 +22,3 @@ index ad2cd7c95e..23a18c7ee0 100644
  fn test_sort_stability() {
      #[cfg(not(miri))] // Miri is too slow
      let large_range = 500..510;
-diff --git a/src/libcore/tests/lib.rs b/src/libcore/tests/lib.rs
-index 2e4a8a15d2..f168458bff 100644
---- a/src/libcore/tests/lib.rs
-+++ b/src/libcore/tests/lib.rs
-@@ -32,7 +32,7 @@
- #![feature(slice_partition_dedup)]
- #![feature(copy_within)]
- #![feature(int_error_matching)]
--#![deny(rust_2018_idioms)]
-+#![warn(rust_2018_idioms)]
- 
- extern crate test;
- 
