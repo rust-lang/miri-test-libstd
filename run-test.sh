@@ -19,8 +19,9 @@ shift
 
 RUST_SRC=${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust}
 if ! test -d "$RUST_SRC"; then
-   echo "Rust source dir ($RUST_SRC) does not exist"
-   exit 1
+    echo "Rust source dir ($RUST_SRC) does not exist."
+    echo "Set RUST_SRC to the Rust source directory."
+    exit 1
 fi
 RUST_SRC=$(readlink -e "$RUST_SRC")
 
