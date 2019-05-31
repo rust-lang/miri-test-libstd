@@ -31,4 +31,4 @@ ln -s "$RUST_SRC"/src/lib$CRATE lib$CRATE
 # run test
 cd ${CRATE}_miri_test
 XARGO_RUST_SRC="$RUST_SRC/src" cargo miri setup
-MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- -Zmiri-seed=cafedead -- -Zunstable-options --exclude-should-panic "$@"
+MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- -Zmiri-seed=cafedead $MIRI_EXTRA_FLAGS -- -Zunstable-options --exclude-should-panic "$@"
