@@ -1,8 +1,8 @@
 diff --git a/src/liballoc/collections/vec_deque.rs b/src/liballoc/collections/vec_deque.rs
-index 9a8d48083e..62f3fcf1ef 100644
+index 31e49d06a7..2b0b692704 100644
 --- a/src/liballoc/collections/vec_deque.rs
 +++ b/src/liballoc/collections/vec_deque.rs
-@@ -2984,6 +2984,7 @@ mod tests {
+@@ -2980,6 +2980,7 @@ mod tests {
      }
  
      #[test]
@@ -11,14 +11,14 @@ index 9a8d48083e..62f3fcf1ef 100644
          let mut tester: VecDeque<usize> = VecDeque::with_capacity(7);
  
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
-index ad2cd7c95e..23a18c7ee0 100644
+index ad2cd7c95e..165ab98cc0 100644
 --- a/src/liballoc/tests/slice.rs
 +++ b/src/liballoc/tests/slice.rs
 @@ -466,6 +466,7 @@ fn test_sort() {
  }
  
  #[test]
-+#[cfg(not(miri))] // FIXME rand seems to perform invalid memory accesses.
++#[cfg(not(miri))] // FIXME: Miri fails, see https://github.com/rust-random/rand/issues/779.
  fn test_sort_stability() {
      #[cfg(not(miri))] // Miri is too slow
      let large_range = 500..510;
