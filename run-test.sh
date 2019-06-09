@@ -8,7 +8,9 @@ set -euo pipefail
 ##   ./run-test.sh CRATE_NAME
 ## Environment variables:
 ##   RUST_SRC: The path to the Rust source directory (containing `src`).
-##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust`.
+##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust` or
+##     `$(rustc --print sysroot)/../../..`, which ever exists.  (The former
+##     works for distributed toolchains, the latter for locally built ones.)
 
 CRATE=${1:-}
 if [[ -z "$CRATE" ]]; then
@@ -17,10 +19,18 @@ if [[ -z "$CRATE" ]]; then
 fi
 shift
 
-RUST_SRC=${RUST_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust}
-if ! test -d "$RUST_SRC"; then
-    echo "Rust source dir ($RUST_SRC) does not exist."
-    echo "Set RUST_SRC to the Rust source directory."
+DEFAULT_RUST_SRC=$(rustc --print sysroot)/lib/rustlib/src/rust
+if ! test -d "$DEFAULT_RUST_SRC"; then
+    # The rust-src component is not installed.  Let's see if this seems to be a local build.
+    FALLBACK_RUST_SRC=$(rustc --print sysroot)/../../..
+    if test -f "$FALLBACK_RUST_SRC/Cargo.lock"; then
+        DEFAULT_RUST_SRC=$FALLBACK_RUST_SRC
+    fi
+fi
+RUST_SRC=${RUST_SRC:-$DEFAULT_RUST_SRC}
+if ! test -f "$RUST_SRC/Cargo.lock"; then
+    echo "Rust source dir ($RUST_SRC) does not contain a Cargo.lock file."
+    echo "Set RUST_SRC to the Rust source directory, or install the rust-src component."
     exit 1
 fi
 RUST_SRC=$(readlink -e "$RUST_SRC")
