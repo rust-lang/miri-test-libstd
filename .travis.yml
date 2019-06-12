@@ -18,9 +18,9 @@ before_script:
   else
     RUST_TOOLCHAIN=$(cat rust-version)
   fi
-- echo "Installing Rust version: $RUST_TOOLCHAIN"
+- 'echo "Installing Rust version: $RUST_TOOLCHAIN"'
 # install Rust
-- curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"
+- 'curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"'
 - export PATH=$HOME/.cargo/bin:$PATH
 - travis_retry rustup component add rust-src miri
 - rustc --version
