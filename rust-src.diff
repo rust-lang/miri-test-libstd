@@ -1,8 +1,8 @@
 diff --git a/src/liballoc/collections/vec_deque.rs b/src/liballoc/collections/vec_deque.rs
-index 31e49d06a7..2b0b692704 100644
+index 573dd86b23..a8891a0fd8 100644
 --- a/src/liballoc/collections/vec_deque.rs
 +++ b/src/liballoc/collections/vec_deque.rs
-@@ -2980,6 +2980,7 @@ mod tests {
+@@ -3021,6 +3021,7 @@ mod tests {
      }
  
      #[test]
@@ -22,3 +22,15 @@ index ad2cd7c95e..165ab98cc0 100644
  fn test_sort_stability() {
      #[cfg(not(miri))] // Miri is too slow
      let large_range = 500..510;
+diff --git a/src/libcore/tests/array.rs b/src/libcore/tests/array.rs
+index 9e133ac568..0a0744f975 100644
+--- a/src/libcore/tests/array.rs
++++ b/src/libcore/tests/array.rs
+@@ -20,6 +20,7 @@ fn fixed_size_array() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // Miri does not support const generics
+ fn array_try_from() {
+     macro_rules! test {
+         ($($N:expr)+) => {
