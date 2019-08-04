@@ -1,15 +1,3 @@
-diff --git a/src/liballoc/collections/vec_deque.rs b/src/liballoc/collections/vec_deque.rs
-index 573dd86b23..a8891a0fd8 100644
---- a/src/liballoc/collections/vec_deque.rs
-+++ b/src/liballoc/collections/vec_deque.rs
-@@ -3021,6 +3021,7 @@ mod tests {
-     }
- 
-     #[test]
-+    #[cfg(not(miri))] // FIXME: Miri fails, see https://github.com/rust-lang/rust/issues/60076.
-     fn test_drain() {
-         let mut tester: VecDeque<usize> = VecDeque::with_capacity(7);
- 
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
 index ad2cd7c95e..165ab98cc0 100644
 --- a/src/liballoc/tests/slice.rs
@@ -23,14 +11,14 @@ index ad2cd7c95e..165ab98cc0 100644
      #[cfg(not(miri))] // Miri is too slow
      let large_range = 500..510;
 diff --git a/src/libcore/tests/array.rs b/src/libcore/tests/array.rs
-index 9e133ac568..0a0744f975 100644
+index 9e133ac568..35f1da9301 100644
 --- a/src/libcore/tests/array.rs
 +++ b/src/libcore/tests/array.rs
 @@ -20,6 +20,7 @@ fn fixed_size_array() {
  }
  
  #[test]
-+#[cfg(not(miri))] // Miri does not support const generics
++#[cfg(not(miri))] // FIXME: Miri does not support const generics
  fn array_try_from() {
      macro_rules! test {
          ($($N:expr)+) => {
