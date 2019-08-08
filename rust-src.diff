@@ -1,3 +1,27 @@
+diff --git a/src/liballoc/rc/tests.rs b/src/liballoc/rc/tests.rs
+index 6fd3f90935..1c0283f1b3 100644
+--- a/src/liballoc/rc/tests.rs
++++ b/src/liballoc/rc/tests.rs
+@@ -427,6 +427,7 @@ fn test_downcast() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // FIXME: Miri does not support const generics
+ fn test_array_from_slice() {
+     let v = vec![1, 2, 3];
+     let r: Rc<[u32]> = Rc::from(v);
+diff --git a/src/liballoc/sync/tests.rs b/src/liballoc/sync/tests.rs
+index 9220f5e033..8adb5ec384 100644
+--- a/src/liballoc/sync/tests.rs
++++ b/src/liballoc/sync/tests.rs
+@@ -480,6 +480,7 @@ fn test_downcast() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // FIXME: Miri does not support const generics
+ fn test_array_from_slice() {
+     let v = vec![1, 2, 3];
+     let r: Arc<[u32]> = Arc::from(v);
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
 index ad2cd7c95e..165ab98cc0 100644
 --- a/src/liballoc/tests/slice.rs
