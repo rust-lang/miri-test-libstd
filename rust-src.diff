@@ -22,6 +22,18 @@ index 9220f5e033..8adb5ec384 100644
  fn test_array_from_slice() {
      let v = vec![1, 2, 3];
      let r: Arc<[u32]> = Arc::from(v);
+diff --git a/src/liballoc/tests.rs b/src/liballoc/tests.rs
+index ed46ba8a1b..22d38c70b7 100644
+--- a/src/liballoc/tests.rs
++++ b/src/liballoc/tests.rs
+@@ -141,6 +141,7 @@ fn boxed_slice_from_iter() {
+ }
+ 
+ #[test]
++#[cfg(not(miri))] // FIXME: Miri does not support const generics
+ fn test_array_from_slice() {
+     let v = vec![1, 2, 3];
+     let r: Box<[u32]> = v.into_boxed_slice();
 diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
 index ad2cd7c95e..165ab98cc0 100644
 --- a/src/liballoc/tests/slice.rs
