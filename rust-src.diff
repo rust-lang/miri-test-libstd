@@ -34,18 +34,6 @@ index ed46ba8a1b..22d38c70b7 100644
  fn test_array_from_slice() {
      let v = vec![1, 2, 3];
      let r: Box<[u32]> = v.into_boxed_slice();
-diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
-index ad2cd7c95e..165ab98cc0 100644
---- a/src/liballoc/tests/slice.rs
-+++ b/src/liballoc/tests/slice.rs
-@@ -466,6 +466,7 @@ fn test_sort() {
- }
- 
- #[test]
-+#[cfg(not(miri))] // FIXME: Miri fails, see https://github.com/rust-random/rand/issues/779.
- fn test_sort_stability() {
-     #[cfg(not(miri))] // Miri is too slow
-     let large_range = 500..510;
 diff --git a/src/libcore/tests/array.rs b/src/libcore/tests/array.rs
 index 9e133ac568..35f1da9301 100644
 --- a/src/libcore/tests/array.rs
