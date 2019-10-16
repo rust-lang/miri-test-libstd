@@ -20,7 +20,7 @@ before_script:
   fi
 - 'echo "Installing Rust version: $RUST_TOOLCHAIN"'
 # install Rust
-- 'curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"' --profile minimal --component rust-src --component miri
+- 'curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN" --profile minimal --component rust-src --component miri'
 - export PATH=$HOME/.cargo/bin:$PATH
 - rustc --version
 
