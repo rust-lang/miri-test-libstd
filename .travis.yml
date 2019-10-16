@@ -20,7 +20,7 @@ before_script:
   fi
 - 'echo "Installing Rust version: $RUST_TOOLCHAIN"'
 # install Rust
-- 'curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"'
+- 'curl https://build.travis-ci.org/files/rustup-init.sh -sSf | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN"' --profile minimal
 - export PATH=$HOME/.cargo/bin:$PATH
 - travis_retry rustup component add rust-src miri
 - rustc --version
