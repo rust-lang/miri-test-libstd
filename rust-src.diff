@@ -1,0 +1,147 @@
+diff --git a/src/liballoc/tests/binary_heap.rs b/src/liballoc/tests/binary_heap.rs
+index a44cf1eaf6d..a896a1064d9 100644
+--- a/src/liballoc/tests/binary_heap.rs
++++ b/src/liballoc/tests/binary_heap.rs
+@@ -347,7 +347,7 @@ fn assert_covariance() {
+ // Destructors must be called exactly once per element.
+ // FIXME: re-enable emscripten once it can unwind again
+ #[test]
+-#[cfg(not(any(miri, target_os = "emscripten")))] // Miri does not support catching panics
++#[cfg(not(target_os = "emscripten"))]
+ fn panic_safe() {
+     use std::cmp;
+     use std::panic::{self, AssertUnwindSafe};
+@@ -376,7 +376,10 @@ fn panic_safe() {
+     }
+     let mut rng = thread_rng();
+     const DATASZ: usize = 32;
++    #[cfg(not(miri))] // Miri is too slow
+     const NTEST: usize = 10;
++    #[cfg(miri)]
++    const NTEST: usize = 1;
+ 
+     // don't use 0 in the data -- we want to catch the zeroed-out case.
+     let data = (1..=DATASZ).collect::<Vec<_>>();
+diff --git a/src/liballoc/tests/slice.rs b/src/liballoc/tests/slice.rs
+index ad2cd7c95eb..d9707b95740 100644
+--- a/src/liballoc/tests/slice.rs
++++ b/src/liballoc/tests/slice.rs
+@@ -4,7 +4,6 @@ use std::mem;
+ use std::panic;
+ use std::rc::Rc;
+ use std::sync::atomic::{Ordering::Relaxed, AtomicUsize};
+-use std::thread;
+ 
+ use rand::{Rng, RngCore, thread_rng};
+ use rand::seq::SliceRandom;
+@@ -1406,11 +1405,9 @@ fn test_box_slice_clone() {
+ #[test]
+ #[allow(unused_must_use)] // here, we care about the side effects of `.clone()`
+ #[cfg_attr(target_os = "emscripten", ignore)]
+-#[cfg(not(miri))] // Miri does not support threads
+ fn test_box_slice_clone_panics() {
+     use std::sync::Arc;
+     use std::sync::atomic::{AtomicUsize, Ordering};
+-    use std::thread::spawn;
+ 
+     struct Canary {
+         count: Arc<AtomicUsize>,
+@@ -1446,7 +1443,7 @@ fn test_box_slice_clone_panics() {
+         panics: true,
+     };
+ 
+-    spawn(move || {
++    std::panic::catch_unwind(move || {
+             // When xs is dropped, +5.
+             let xs = vec![canary.clone(), canary.clone(), canary.clone(), panic, canary]
+                 .into_boxed_slice();
+@@ -1454,7 +1451,6 @@ fn test_box_slice_clone_panics() {
+             // When panic is cloned, +3.
+             xs.clone();
+         })
+-        .join()
+         .unwrap_err();
+ 
+     // Total = 8
+@@ -1566,7 +1562,7 @@ macro_rules! test {
+             }
+ 
+             let v = $input.to_owned();
+-            let _ = thread::spawn(move || {
++            let _ = std::panic::catch_unwind(move || {
+                 let mut v = v;
+                 let mut panic_countdown = panic_countdown;
+                 v.$func(|a, b| {
+@@ -1577,7 +1573,7 @@ macro_rules! test {
+                     panic_countdown -= 1;
+                     a.cmp(b)
+                 })
+-            }).join();
++            });
+ 
+             // Check that the number of things dropped is exactly
+             // what we expect (i.e., the contents of `v`).
+@@ -1598,7 +1594,6 @@ thread_local!(static SILENCE_PANIC: Cell<bool> = Cell::new(false));
+ 
+ #[test]
+ #[cfg_attr(target_os = "emscripten", ignore)] // no threads
+-#[cfg(not(miri))] // Miri does not support threads
+ fn panic_safe() {
+     let prev = panic::take_hook();
+     panic::set_hook(Box::new(move |info| {
+@@ -1609,8 +1604,18 @@ fn panic_safe() {
+ 
+     let mut rng = thread_rng();
+ 
+-    for len in (1..20).chain(70..MAX_LEN) {
+-        for &modulus in &[5, 20, 50] {
++    #[cfg(not(miri))] // Miri is too slow
++    let lens = (1..20).chain(70..MAX_LEN);
++    #[cfg(not(miri))] // Miri is too slow
++    let moduli = &[5, 20, 50];
++
++    #[cfg(miri)]
++    let lens = (1..13);
++    #[cfg(miri)]
++    let moduli = &[10];
++
++    for len in lens {
++        for &modulus in moduli {
+             for &has_runs in &[false, true] {
+                 let mut input = (0..len)
+                     .map(|id| {
+@@ -1643,6 +1648,9 @@ fn panic_safe() {
+             }
+         }
+     }
++
++    // Set default panic hook again.
++    drop(panic::take_hook());
+ }
+ 
+ #[test]
+diff --git a/src/liballoc/tests/vec.rs b/src/liballoc/tests/vec.rs
+index 80537217697..58b555ecb4e 100644
+--- a/src/liballoc/tests/vec.rs
++++ b/src/liballoc/tests/vec.rs
+@@ -944,10 +944,9 @@ fn drain_filter_complex() {
+     }
+ }
+ 
+-// Miri does not support catching panics
+ // FIXME: re-enable emscripten once it can unwind again
+ #[test]
+-#[cfg(not(any(miri, target_os = "emscripten")))]
++#[cfg(not(target_os = "emscripten"))]
+ fn drain_filter_consumed_panic() {
+     use std::rc::Rc;
+     use std::sync::Mutex;
+@@ -999,7 +998,7 @@ fn drain_filter_consumed_panic() {
+ 
+ // FIXME: Re-enable emscripten once it can catch panics
+ #[test]
+-#[cfg(not(any(miri, target_os = "emscripten")))] // Miri does not support catching panics
++#[cfg(not(target_os = "emscripten"))]
+ fn drain_filter_unconsumed_panic() {
+     use std::rc::Rc;
+     use std::sync::Mutex;
