@@ -13,4 +13,4 @@ echo && echo "## Testing core (without validation)" && echo
 echo && echo "## Testing core" && echo
 ./run-test.sh core
 echo && echo "## Testing alloc" && echo
-./run-test.sh alloc
+./run-test.sh alloc -Zmiri-ignore-leaks # FIXME: ignoring leaks due to https://github.com/rust-lang/rust/issues/69769 and https://github.com/rust-lang/rust/issues/69770
