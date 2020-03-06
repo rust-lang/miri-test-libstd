@@ -21,3 +21,9 @@ RUST_SRC=~/path/to/rustc ./run-test.sh core # or `alloc`
 Here, `~/path/to/rustc` should be the directory containing `x.py`.
 Then the test suite will be compiled from the standard library in that directory.
 Make sure that is as close to your rustup default toolchain as possible, as the toolchain will still be used to build that standard library and its test suite.
+
+`run-test` also accepts parameters that are passed to Miri and the test runner:
+
+```shell
+RUST_SRC=~/path/to/rustc ./run-test.sh core -Zmiri-flags -- test-params
+```

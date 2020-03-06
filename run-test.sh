@@ -42,4 +42,4 @@ ln -s "$RUST_SRC"/src/lib$CRATE lib$CRATE
 # run test
 cd ${CRATE}_miri_test
 XARGO_RUST_SRC="$RUST_SRC/src" cargo miri setup
-MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- ${MIRI_FLAGS:-} -- "$@"
+MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- "$@"
