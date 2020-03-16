@@ -12,10 +12,10 @@ To run the tests yourself, make sure you have Miri installed (`rustup component 
 ```
 
 This will run the test suite of the standard library of your current toolchain.
-If you are working on the standard library and want to check that the tests still pass with your modifications, you can run the tests as follows:
+If you are working on the standard library and want to check that the tests pass with your modifications, set `RUST_SRC` to the checkout you are working in:
 
 ```shell
-RUST_SRC=~/path/to/rustc ./run-test.sh core # or `alloc`
+RUST_SRC=~/path/to/rustc ./run-test.sh core
 ```
 
 Here, `~/path/to/rustc` should be the directory containing `x.py`.
@@ -25,5 +25,5 @@ Make sure that is as close to your rustup default toolchain as possible, as the 
 `run-test` also accepts parameters that are passed to Miri and the test runner:
 
 ```shell
-RUST_SRC=~/path/to/rustc ./run-test.sh core -Zmiri-flags -- test-params
+./run-test.sh alloc -Zmiri-flags -- test-params
 ```
