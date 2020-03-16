@@ -8,9 +8,9 @@ cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
 export RUST_SRC=rust-src-patched
-echo && echo "## Testing core (without validation)" && echo
-./run-test.sh core -Zmiri-disable-validation
+echo && echo "## Testing core (without validation and Stacked Borrows)" && echo
+./run-test.sh core -Zmiri-disable-validation -Zmiri-disable-stacked-borrows
 echo && echo "## Testing core" && echo
 ./run-test.sh core
 echo && echo "## Testing alloc" && echo
-./run-test.sh alloc -Zmiri-ignore-leaks # FIXME: ignoring leaks due to https://github.com/rust-lang/rust/issues/69769 and https://github.com/rust-lang/rust/issues/69770
+./run-test.sh alloc
