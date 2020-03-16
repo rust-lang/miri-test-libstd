@@ -11,6 +11,6 @@ export RUST_SRC=rust-src-patched
 echo && echo "## Testing core (without validation and Stacked Borrows)" && echo
 ./run-test.sh core -Zmiri-disable-validation -Zmiri-disable-stacked-borrows
 echo && echo "## Testing core" && echo
-./run-test.sh core
+./run-test.sh core -Zmiri-ignore-leaks
 echo && echo "## Testing alloc" && echo
 ./run-test.sh alloc
