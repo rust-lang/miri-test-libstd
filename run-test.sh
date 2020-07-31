@@ -20,13 +20,6 @@ fi
 shift
 
 DEFAULT_RUST_SRC=$(rustc --print sysroot)/lib/rustlib/src/rust
-if ! test -d "$DEFAULT_RUST_SRC"; then
-    # The rust-src component is not installed.  Let's see if this seems to be a local build.
-    FALLBACK_RUST_SRC=$(rustc --print sysroot)/../../..
-    if test -f "$FALLBACK_RUST_SRC/Cargo.lock"; then
-        DEFAULT_RUST_SRC=$FALLBACK_RUST_SRC
-    fi
-fi
 RUST_SRC=${RUST_SRC:-$DEFAULT_RUST_SRC}
 if ! test -f "$RUST_SRC/Cargo.lock"; then
     echo "Rust source dir ($RUST_SRC) does not contain a Cargo.lock file."
@@ -37,9 +30,9 @@ RUST_SRC=$(readlink -e "$RUST_SRC")
 
 # update symlink
 rm -f lib$CRATE
-ln -s "$RUST_SRC"/src/lib$CRATE lib$CRATE
+ln -s "$RUST_SRC"/library/$CRATE lib$CRATE
 
 # run test
 cd ${CRATE}_miri_test
-XARGO_RUST_SRC="$RUST_SRC/src" cargo miri setup
+XARGO_RUST_SRC="$RUST_SRC/library" cargo miri setup
 MIRI_SYSROOT=~/.cache/miri/HOST cargo miri test -- "$@"

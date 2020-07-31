@@ -8,7 +8,7 @@ edition = "2018"
 
 [lib]
 name = "alloc_miri_test"
-path = "../liballoc/lib.rs"
+path = "../liballoc/src/lib.rs"
 
 [dependencies]
 

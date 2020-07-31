@@ -8,7 +8,7 @@ edition = "2018"
 
 [lib]
 name = "core_miri_test"
-path = "../libcore/lib.rs"
+path = "../libcore/src/lib.rs"
 test = false
 bench = false
 
