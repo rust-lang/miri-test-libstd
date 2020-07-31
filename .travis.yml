@@ -11,6 +11,7 @@ os:
 dist: xenial
 
 before_script:
+- sudo apt-get -y install moreutils
 # Compute the Rust version we use. We do not use "language: rust" to have more control here.
 - |
   if [[ "$TRAVIS_EVENT_TYPE" == cron ]]; then
