@@ -9,8 +9,8 @@ cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 # run the tests (some also without validation, to exercise those code paths in Miri)
 export RUST_SRC=rust-src-patched
 echo && echo "## Testing core (no validation, no Stacked Borrows, symbolic alignment)" && echo
-MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" ./run-test.sh core --libs --tests -- --skip align 2>&1 | ts -i '%.s  '
+MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" ./run-test.sh core --lib --tests -- --skip align 2>&1 | ts -i '%.s  '
 echo && echo "## Testing core" && echo
-./run-test.sh core --libs --tests 2>&1 | ts -i '%.s  '
+./run-test.sh core --lib --tests 2>&1 | ts -i '%.s  '
 echo && echo "## Testing alloc (symbolic alignment)" && echo
-MIRIFLAGS="-Zmiri-symbolic-alignment-check" ./run-test.sh alloc --libs --tests 2>&1 | ts -i '%.s  '
+MIRIFLAGS="-Zmiri-symbolic-alignment-check" ./run-test.sh alloc --lib --tests 2>&1 | ts -i '%.s  '
