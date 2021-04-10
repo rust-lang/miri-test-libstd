@@ -1,0 +1,133 @@
+diff --git a/library/alloc/src/boxed.rs b/library/alloc/src/boxed.rs
+index 04033905728..ef37fef0455 100644
+--- a/library/alloc/src/boxed.rs
++++ b/library/alloc/src/boxed.rs
+@@ -793,7 +793,7 @@ impl<T: ?Sized, A: Allocator> Box<T, A> {
+     /// use std::alloc::{Allocator, Layout, System};
+     ///
+     /// unsafe {
+-    ///     let ptr = System.allocate(Layout::new::<i32>())?.as_mut_ptr();
++    ///     let ptr = System.allocate(Layout::new::<i32>())?.as_mut_ptr() as *mut i32;
+     ///     // In general .write is required to avoid attempting to destruct
+     ///     // the (uninitialized) previous contents of `ptr`, though for this
+     ///     // simple example `*ptr = 5` would have worked as well.
+diff --git a/library/core/src/mem/maybe_uninit.rs b/library/core/src/mem/maybe_uninit.rs
+index 64342de6341..4d7d47579ee 100644
+--- a/library/core/src/mem/maybe_uninit.rs
++++ b/library/core/src/mem/maybe_uninit.rs
+@@ -736,22 +736,22 @@ pub unsafe fn assume_init_drop(&mut self) {
+     /// #![feature(maybe_uninit_ref)]
+     /// use std::mem::MaybeUninit;
+     ///
+-    /// # unsafe extern "C" fn initialize_buffer(buf: *mut [u8; 2048]) { *buf = [0; 2048] }
++    /// # unsafe extern "C" fn initialize_buffer(buf: *mut [u8; 1024]) { *buf = [0; 1024] }
+     /// # #[cfg(FALSE)]
+     /// extern "C" {
+     ///     /// Initializes *all* the bytes of the input buffer.
+-    ///     fn initialize_buffer(buf: *mut [u8; 2048]);
++    ///     fn initialize_buffer(buf: *mut [u8; 1024]);
+     /// }
+     ///
+-    /// let mut buf = MaybeUninit::<[u8; 2048]>::uninit();
++    /// let mut buf = MaybeUninit::<[u8; 1024]>::uninit();
+     ///
+     /// // Initialize `buf`:
+     /// unsafe { initialize_buffer(buf.as_mut_ptr()); }
+     /// // Now we know that `buf` has been initialized, so we could `.assume_init()` it.
+-    /// // However, using `.assume_init()` may trigger a `memcpy` of the 2048 bytes.
++    /// // However, using `.assume_init()` may trigger a `memcpy` of the 1024 bytes.
+     /// // To assert our buffer has been initialized without copying it, we upgrade
+-    /// // the `&mut MaybeUninit<[u8; 2048]>` to a `&mut [u8; 2048]`:
+-    /// let buf: &mut [u8; 2048] = unsafe {
++    /// // the `&mut MaybeUninit<[u8; 1024]>` to a `&mut [u8; 1024]`:
++    /// let buf: &mut [u8; 1024] = unsafe {
+     ///     // SAFETY: `buf` has been initialized.
+     ///     buf.assume_init_mut()
+     /// };
+diff --git a/library/core/src/ptr/const_ptr.rs b/library/core/src/ptr/const_ptr.rs
+index f18387d020d..4571ba154ea 100644
+--- a/library/core/src/ptr/const_ptr.rs
++++ b/library/core/src/ptr/const_ptr.rs
+@@ -724,7 +724,7 @@ pub const fn wrapping_sub(self, count: usize) -> Self
+     /// #![feature(set_ptr_value)]
+     /// # use core::fmt::Debug;
+     /// let arr: [i32; 3] = [1, 2, 3];
+-    /// let mut ptr = &arr[0] as *const dyn Debug;
++    /// let mut ptr = arr.as_ptr() as *const dyn Debug;
+     /// let thin = ptr as *const u8;
+     /// unsafe {
+     ///     ptr = ptr.set_ptr_value(thin.add(8));
+diff --git a/library/core/src/ptr/mut_ptr.rs b/library/core/src/ptr/mut_ptr.rs
+index 3c6f1978283..ba08823e343 100644
+--- a/library/core/src/ptr/mut_ptr.rs
++++ b/library/core/src/ptr/mut_ptr.rs
+@@ -830,7 +830,7 @@ pub const fn wrapping_sub(self, count: usize) -> Self
+     /// #![feature(set_ptr_value)]
+     /// # use core::fmt::Debug;
+     /// let mut arr: [i32; 3] = [1, 2, 3];
+-    /// let mut ptr = &mut arr[0] as *mut dyn Debug;
++    /// let mut ptr = arr.as_mut_ptr() as *mut dyn Debug;
+     /// let thin = ptr as *mut u8;
+     /// unsafe {
+     ///     ptr = ptr.set_ptr_value(thin.add(8));
+diff --git a/library/core/src/sync/atomic.rs b/library/core/src/sync/atomic.rs
+index bf70b28579c..9085d5c7b97 100644
+--- a/library/core/src/sync/atomic.rs
++++ b/library/core/src/sync/atomic.rs
+@@ -78,7 +78,7 @@
+ //! ```
+ //! use std::sync::Arc;
+ //! use std::sync::atomic::{AtomicUsize, Ordering};
+-//! use std::thread;
++//! use std::{hint, thread};
+ //!
+ //! fn main() {
+ //!     let spinlock = Arc::new(AtomicUsize::new(1));
+@@ -89,7 +89,9 @@
+ //!     });
+ //!
+ //!     // Wait for the other thread to release the lock
+-//!     while spinlock.load(Ordering::SeqCst) != 0 {}
++//!     while spinlock.load(Ordering::SeqCst) != 0 {
++//!         hint::spin_loop();
++//!     }
+ //!
+ //!     if let Err(panic) = thread.join() {
+ //!         println!("Thread had an error: {:?}", panic);
+@@ -898,8 +900,10 @@ pub const fn new(p: *mut T) -> AtomicPtr<T> {
+     /// ```
+     /// use std::sync::atomic::{AtomicPtr, Ordering};
+     ///
+-    /// let mut atomic_ptr = AtomicPtr::new(&mut 10);
+-    /// *atomic_ptr.get_mut() = &mut 5;
++    /// let mut data = 10;
++    /// let mut atomic_ptr = AtomicPtr::new(&mut data);
++    /// let mut other_data = 5;
++    /// *atomic_ptr.get_mut() = &mut other_data;
+     /// assert_eq!(unsafe { *atomic_ptr.load(Ordering::SeqCst) }, 5);
+     /// ```
+     #[inline]
+@@ -916,9 +920,11 @@ pub fn get_mut(&mut self) -> &mut *mut T {
+     /// #![feature(atomic_from_mut)]
+     /// use std::sync::atomic::{AtomicPtr, Ordering};
+     ///
+-    /// let mut some_ptr = &mut 123 as *mut i32;
++    /// let mut data = 123;
++    /// let mut some_ptr = &mut data as *mut i32;
+     /// let a = AtomicPtr::from_mut(&mut some_ptr);
+-    /// a.store(&mut 456, Ordering::Relaxed);
++    /// let mut other_data = 456;
++    /// a.store(&mut other_data, Ordering::Relaxed);
+     /// assert_eq!(unsafe { *some_ptr }, 456);
+     /// ```
+     #[inline]
+@@ -944,7 +950,8 @@ pub fn from_mut(v: &mut *mut T) -> &Self {
+     /// ```
+     /// use std::sync::atomic::AtomicPtr;
+     ///
+-    /// let atomic_ptr = AtomicPtr::new(&mut 5);
++    /// let mut data = 5;
++    /// let atomic_ptr = AtomicPtr::new(&mut data);
+     /// assert_eq!(unsafe { *atomic_ptr.into_inner() }, 5);
+     /// ```
+     #[inline]
