@@ -28,4 +28,4 @@ Make sure that is as close to your rustup default toolchain as possible, as the 
 ./run-test.sh alloc -Zmiri-flags -- test-params
 ```
 
-If you want to know gow long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command.
+If you want to know how long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command.
