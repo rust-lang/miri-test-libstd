@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install 'ts'
+        run: sudo apt-get -y install moreutils
+
       - name: Install correct toolchain
         shell: bash
         run: |
