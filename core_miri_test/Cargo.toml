@@ -12,6 +12,12 @@ path = "../libcore/src/lib.rs"
 test = false
 bench = false
 
+[features]
+# Empty this crate to avoid two copies of libcore.
+# See https://github.com/rust-lang/miri-test-libstd/issues/4.
+default = ["miri-test-libstd"]
+miri-test-libstd = []
+
 [[test]]
 name = "coretests"
 path = "../libcore/tests/lib.rs"

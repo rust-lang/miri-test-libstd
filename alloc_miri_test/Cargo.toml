@@ -10,6 +10,12 @@ edition = "2018"
 name = "alloc_miri_test"
 path = "../liballoc/src/lib.rs"
 
+[features]
+# Empty this crate to avoid two copies of liballoc.
+# See https://github.com/rust-lang/miri-test-libstd/issues/4.
+default = ["miri-test-libstd"]
+miri-test-libstd = []
+
 [dependencies]
 
 [dev-dependencies]
