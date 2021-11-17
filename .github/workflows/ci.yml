@@ -8,8 +8,7 @@ on:
     branches:
       - 'master'
   schedule:
-    # Use <https://crontab.guru> to conveniently edit cron schedule.
-    - cron: '0 6 * * *' # At 06:00 UTC every day.
+    - cron: '30 2 * * *' # At 02:30 UTC every day (rustup-components-history runs at 2:00 UTC).
 
 jobs:
   build:
