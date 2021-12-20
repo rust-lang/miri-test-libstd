@@ -26,7 +26,9 @@ if ! test -f "$RUST_SRC/Cargo.lock"; then
     echo "Set RUST_SRC to the Rust source directory, or install the rust-src component."
     exit 1
 fi
-RUST_SRC=$(readlink -e "$RUST_SRC")
+if readlink -e . &>/dev/null; then
+    RUST_SRC=$(readlink -e "$RUST_SRC")
+fi
 
 # update symlink
 rm -f lib$CRATE
