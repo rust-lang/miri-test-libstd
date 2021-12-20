@@ -26,9 +26,8 @@ if ! test -f "$RUST_SRC/Cargo.lock"; then
     echo "Set RUST_SRC to the Rust source directory, or install the rust-src component."
     exit 1
 fi
-if readlink -e . &>/dev/null; then
-    RUST_SRC=$(readlink -e "$RUST_SRC")
-fi
+# macOS does not have a useful readlink/realpath so we have to use Python instead...
+RUST_SRC=$(python -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$RUST_SRC")
 
 # update symlink
 rm -f lib$CRATE
