@@ -13,15 +13,17 @@ To run the tests yourself, make sure you have Miri installed (`rustup component 
 
 This will run the test suite of the standard library of your current toolchain.
 `--all-targets` means that doc tests are skipped; those should use separate Miri flags as there are some (expected) memory leaks.
-If you are working on the standard library and want to check that the tests pass with your modifications, set `RUST_SRC` to the checkout you are working in:
+
+If you are working on the standard library and want to check that the tests pass with your modifications, set `MIRI_LIB_SRC` to the `library` folder of the checkout you are working in:
 
 ```shell
-RUST_SRC=~/path/to/rustc ./run-test.sh core --all-targets
+MIRI_LIB_SRC=~/path/to/rustc/library ./run-test.sh core --all-targets
 ```
 
 Here, `~/path/to/rustc` should be the directory containing `x.py`.
 Then the test suite will be compiled from the standard library in that directory.
 Make sure that is as close to your rustup default toolchain as possible, as the toolchain will still be used to build that standard library and its test suite.
+If you are getting strange build errors, `cargo clean` can often fix that.
 
 `run-test` also accepts parameters that are passed to `cargo test` and the test runner,
 and `MIRIFLAGS` can be used as usual to pass parameters to Miri:
