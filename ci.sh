@@ -5,9 +5,9 @@ set -euo pipefail
 rm -rf rust-src-patched
 cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 ( cd rust-src-patched && patch -f -p1 < ../rust-src.diff )
+export MIRI_LIB_SRC=rust-src-patched/library
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
-export RUST_SRC=rust-src-patched
 
 # libcore
 echo && echo "## Testing core (no validation, no Stacked Borrows, symbolic alignment)" && echo
