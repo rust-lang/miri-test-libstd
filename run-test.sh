@@ -33,6 +33,6 @@ rm -f lib$CRATE
 ln -s "$MIRI_LIB_SRC"/$CRATE lib$CRATE
 
 # run test
-cd ${CRATE}_miri_test
+cd ./${CRATE}_miri_test
 cargo miri setup
 cargo miri test "$@"
