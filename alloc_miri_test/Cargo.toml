@@ -4,7 +4,7 @@ name = "alloc_miri_test"
 version = "0.0.0"
 autotests = false
 autobenches = false
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "alloc_miri_test"
