@@ -16,8 +16,9 @@ MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbo
 echo && echo "## Testing core (number validity)" && echo
 MIRIFLAGS="-Zmiri-check-number-validity" \
   ./run-test.sh core --all-targets 2>&1 | ts -i '%.s  '
+# No number validity because of portable-simd scatter/gather
 echo && echo "## Testing core (doctests)" && echo
-MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-check-number-validity" \
+MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
   ./run-test.sh core --doc
 
 # liballoc
