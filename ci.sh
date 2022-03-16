@@ -5,9 +5,13 @@ set -euo pipefail
 rm -rf rust-src-patched
 cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 ( cd rust-src-patched && patch -f -p1 < ../rust-src.diff )
-export MIRI_LIB_SRC=rust-src-patched/library
+export MIRI_LIB_SRC=$(pwd)/rust-src-patched/library
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
+
+# portable-simd
+echo && echo "## Testing portable-simd" && echo
+(cd $MIRI_LIB_SRC/portable-simd && cargo miri test --test i32_ops --test f32_ops --test cast)
 
 # libcore
 echo && echo "## Testing core (no validation, no Stacked Borrows, symbolic alignment)" && echo

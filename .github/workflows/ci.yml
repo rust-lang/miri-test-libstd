@@ -30,6 +30,7 @@ jobs:
           echo "Installing Rust version: $RUST_TOOLCHAIN"
           rustup default $RUST_TOOLCHAIN
           rustup component add rust-src miri
+          cargo miri setup
 
       - name: Show Rust version
         run: |
