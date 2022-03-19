@@ -5,6 +5,7 @@ set -euo pipefail
 
 # We need 'ts'
 sudo apt-get -y install moreutils
+echo
 
 # And of course we need Rust
 if [[ "$GITHUB_EVENT_NAME" == 'schedule' ]]; then
