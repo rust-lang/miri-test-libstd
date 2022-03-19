@@ -23,7 +23,7 @@ MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
 
 # portable-simd
 echo && echo "## Testing portable-simd" && echo
-(cd $MIRI_LIB_SRC/portable-simd && cargo miri test --test i32_ops --test f32_ops --test cast)
+(cd $MIRI_LIB_SRC/portable-simd && cargo miri test)
 
 # liballoc
 echo && echo "## Testing alloc (symbolic alignment, number validity)" && echo
