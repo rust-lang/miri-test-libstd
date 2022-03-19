@@ -1,0 +1,31 @@
+diff --git a/library/portable-simd/crates/core_simd/tests/round.rs b/library/portable-simd/crates/core_simd/tests/round.rs
+index 7feb0320a16..484fd5bf47d 100644
+--- a/library/portable-simd/crates/core_simd/tests/round.rs
++++ b/library/portable-simd/crates/core_simd/tests/round.rs
+@@ -59,7 +59,7 @@ fn to_int_unchecked<const LANES: usize>() {
+                     const MAX_REPRESENTABLE_VALUE: Scalar =
+                         (ALL_MANTISSA_BITS << (core::mem::size_of::<Scalar>() * 8 - <Scalar>::MANTISSA_DIGITS as usize - 1)) as Scalar;
+ 
+-                    let mut runner = proptest::test_runner::TestRunner::default();
++                    let mut runner = test_helpers::make_runner();
+                     runner.run(
+                         &test_helpers::array::UniformArrayStrategy::new(-MAX_REPRESENTABLE_VALUE..MAX_REPRESENTABLE_VALUE),
+                         |x| {
+diff --git a/library/portable-simd/crates/test_helpers/src/lib.rs b/library/portable-simd/crates/test_helpers/src/lib.rs
+index 8bf7f5ed3d2..141bee18a9a 100644
+--- a/library/portable-simd/crates/test_helpers/src/lib.rs
++++ b/library/portable-simd/crates/test_helpers/src/lib.rs
+@@ -78,11 +78,11 @@ fn default_strategy() -> Self::Strategy {
+ }
+ 
+ #[cfg(not(miri))]
+-fn make_runner() -> proptest::test_runner::TestRunner {
++pub fn make_runner() -> proptest::test_runner::TestRunner {
+     Default::default()
+ }
+ #[cfg(miri)]
+-fn make_runner() -> proptest::test_runner::TestRunner {
++pub fn make_runner() -> proptest::test_runner::TestRunner {
+     // Only run a few tests on Miri
+     proptest::test_runner::TestRunner::new(proptest::test_runner::Config::with_cases(4))
+ }
