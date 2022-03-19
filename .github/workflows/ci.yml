@@ -11,35 +11,32 @@ on:
     - cron: '30 2 * * *' # At 02:30 UTC every day (rustup-components-history runs at 2:00 UTC).
 
 jobs:
-  build:
+  test-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install 'ts'
-        run: sudo apt-get -y install moreutils
-
-      - name: Install correct toolchain
-        shell: bash
-        run: |
-          if [[ ${{ github.event_name }} == 'schedule' ]]; then
-            RUST_TOOLCHAIN=nightly-$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)
-          else
-            RUST_TOOLCHAIN=$(cat rust-version)
-          fi
-          echo "Installing Rust version: $RUST_TOOLCHAIN"
-          rustup default $RUST_TOOLCHAIN
-          rustup component add rust-src miri
-          cargo miri setup
-
-      - name: Show Rust version
-        run: |
-          rustup show
-          rustc -Vv
-          cargo -V
-
+      - name: Setup environment
+        run: bash ./ci-setup.sh
       - name: Test
-        run: bash ./ci.sh
+        run: bash ./ci-test.sh core
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup environment
+        run: bash ./ci-setup.sh
+      - name: Test
+        run: bash ./ci-test.sh alloc
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup environment
+        run: bash ./ci-setup.sh
+      - name: Test
+        run: bash ./ci-test.sh simd
 
   # Send a Zulip notification when a cron job fails
   cron-fail-notify:
