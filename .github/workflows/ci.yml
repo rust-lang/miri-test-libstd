@@ -42,7 +42,7 @@ jobs:
   cron-fail-notify:
     name: cronjob failure notification
     runs-on: ubuntu-latest
-    needs: [test-core test-alloc test-simd]
+    needs: [test-core, test-alloc, test-simd]
     if: github.event_name == 'schedule' && (failure() || cancelled())
     steps:
       - name: Install zulip-send
