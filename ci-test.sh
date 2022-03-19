@@ -20,6 +20,7 @@ core)
     echo && echo "## Testing core (doctests)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
              ./run-test.sh core --doc
+    ;;
 alloc)
     echo && echo "## Testing alloc (symbolic alignment, number validity)" && echo
     MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-check-number-validity" \
@@ -27,9 +28,11 @@ alloc)
     echo && echo "## Testing alloc (doctests)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-check-number-validity" \
              ./run-test.sh alloc --doc
+    ;;
 simd)
     echo && echo "## Testing portable-simd" && echo
     (cd $MIRI_LIB_SRC/portable-simd && cargo miri test)
+    ;;
 *)
     echo "Unknown command"
     exit 1
