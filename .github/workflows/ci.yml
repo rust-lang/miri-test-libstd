@@ -14,7 +14,7 @@ jobs:
   test-core:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -23,7 +23,7 @@ jobs:
   test-alloc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -32,7 +32,7 @@ jobs:
   test-simd:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
