@@ -13,25 +13,29 @@ core)
     echo && echo "## Testing core (no validation, no Stacked Borrows, symbolic alignment)" && echo
     MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
              ./run-test.sh core --all-targets -- --skip align 2>&1 | ts -i '%.s  '
-    echo && echo "## Testing core (number validity)" && echo
-    MIRIFLAGS="-Zmiri-check-number-validity" \
+    echo && echo "## Testing core (strict provenance, number validity)" && echo
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-check-number-validity" \
              ./run-test.sh core --all-targets 2>&1 | ts -i '%.s  '
-    # No number validity because of portable-simd scatter/gather
-    echo && echo "## Testing core (doctests)" && echo
+    # No number validity because of portable-simd scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
+    echo && echo "## Testing core docs" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
              ./run-test.sh core --doc
     ;;
 alloc)
-    echo && echo "## Testing alloc (symbolic alignment, number validity)" && echo
-    MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-check-number-validity" \
+    echo && echo "## Testing alloc (symbolic alignment, strict provenance, number validity)" && echo
+    MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance -Zmiri-check-number-validity" \
              ./run-test.sh alloc --all-targets 2>&1 | ts -i '%.s  '
-    echo && echo "## Testing alloc (doctests)" && echo
+    echo && echo "## Testing alloc docs (number validity)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-check-number-validity" \
              ./run-test.sh alloc --doc
     ;;
 simd)
-    echo && echo "## Testing portable-simd" && echo
-    (cd $MIRI_LIB_SRC/portable-simd && cargo miri test)
+    echo && echo "## Testing portable-simd (strict provenance, number validity)" && echo
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-check-number-validity" \
+      (cd $MIRI_LIB_SRC/portable-simd && cargo miri test --all-targets)
+    # No number validity because of scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
+    echo && echo "## Testing portable-simd docs" && echo
+    (cd $MIRI_LIB_SRC/portable-simd && cargo miri test --doc)
     ;;
 *)
     echo "Unknown command"
