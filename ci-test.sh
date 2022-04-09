@@ -12,10 +12,10 @@ case "$1" in
 core)
     echo && echo "## Testing core (no validation, no Stacked Borrows, symbolic alignment)" && echo
     MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
-             ./run-test.sh core --all-targets -- --skip align 2>&1 | ts -i '%.s  '
+             ./run-test.sh core --lib --tests -- --skip align 2>&1 | ts -i '%.s  '
     echo && echo "## Testing core (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
-             ./run-test.sh core --all-targets 2>&1 | ts -i '%.s  '
+             ./run-test.sh core --lib --tests 2>&1 | ts -i '%.s  '
     # FIXME: No strict provenance because of portable-simd scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
     echo && echo "## Testing core docs" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
@@ -24,7 +24,7 @@ core)
 alloc)
     echo && echo "## Testing alloc (symbolic alignment, strict provenance)" && echo
     MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
-             ./run-test.sh alloc --all-targets 2>&1 | ts -i '%.s  '
+             ./run-test.sh alloc --lib --tests 2>&1 | ts -i '%.s  '
     echo && echo "## Testing alloc docs (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
              ./run-test.sh alloc --doc
@@ -33,7 +33,7 @@ simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
-      cargo miri test --all-targets
+      cargo miri test --lib --tests
     # FIXME: No strict provenance because of scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
     echo && echo "## Testing portable-simd docs" && echo
     MIRIFLAGS="" \
