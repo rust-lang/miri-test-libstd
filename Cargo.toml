@@ -2,4 +2,5 @@
 members = [
   "core_miri_test",
   "alloc_miri_test",
+  "more_tests",
 ]

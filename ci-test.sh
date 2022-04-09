@@ -16,7 +16,7 @@ core)
     echo && echo "## Testing core (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
              ./run-test.sh core --all-targets 2>&1 | ts -i '%.s  '
-    # No number validity nor strict provenance because of portable-simd scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
+    # FIXME: No strict provenance because of portable-simd scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
     echo && echo "## Testing core docs" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
              ./run-test.sh core --doc
@@ -34,9 +34,17 @@ simd)
     echo && echo "## Testing portable-simd (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
       cargo miri test --all-targets
-    # No number validity nor strict provenance because of scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
+    # FIXME: No strict provenance because of scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
     echo && echo "## Testing portable-simd docs" && echo
-    cargo miri test --doc
+    MIRIFLAGS="" \
+      cargo miri test --doc
+    ;;
+more)
+    cd more_tests
+    # FIXME: No strict provenance due to MPSC bug (https://github.com/rust-lang/rust/pull/95621)
+    echo && echo "## Testing more" && echo
+    MIRIFLAGS="-Zmiri-disable-isolation" \
+      cargo miri test
     ;;
 *)
     echo "Unknown command"
