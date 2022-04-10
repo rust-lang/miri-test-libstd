@@ -41,9 +41,8 @@ simd)
     ;;
 more)
     cd more_tests
-    # FIXME: No strict provenance due to MPSC bug (https://github.com/rust-lang/rust/pull/95621)
     echo && echo "## Testing more" && echo
-    MIRIFLAGS="-Zmiri-disable-isolation" \
+    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-strict-provenance" \
       cargo miri test
     ;;
 *)
