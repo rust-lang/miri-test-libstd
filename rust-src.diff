@@ -1,3 +1,14 @@
+diff --git a/library/alloc/tests/thin_box.rs b/library/alloc/tests/thin_box.rs
+index 0fe6aaa4d00..51d2e9324bf 100644
+--- a/library/alloc/tests/thin_box.rs
++++ b/library/alloc/tests/thin_box.rs
+@@ -1,5 +1,5 @@
+-use alloc::boxed::ThinBox;
+ use core::mem::size_of;
++use std::boxed::ThinBox;
+ 
+ #[test]
+ fn want_niche_optimization() {
 diff --git a/library/portable-simd/crates/core_simd/tests/round.rs b/library/portable-simd/crates/core_simd/tests/round.rs
 index 7feb0320a16..484fd5bf47d 100644
 --- a/library/portable-simd/crates/core_simd/tests/round.rs
