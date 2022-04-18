@@ -16,9 +16,8 @@ core)
     echo && echo "## Testing core (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
              ./run-test.sh core --lib --tests 2>&1 | ts -i '%.s  '
-    # FIXME: No strict provenance because of portable-simd scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
-    echo && echo "## Testing core docs" && echo
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+    echo && echo "## Testing core docs (strict provenance)" && echo
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
              ./run-test.sh core --doc
     ;;
 alloc)
@@ -34,9 +33,8 @@ simd)
     echo && echo "## Testing portable-simd (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
       cargo miri test --lib --tests
-    # FIXME: No strict provenance because of scatter/gather (https://github.com/rust-lang/portable-simd/issues/271)
-    echo && echo "## Testing portable-simd docs" && echo
-    MIRIFLAGS="" \
+    echo && echo "## Testing portable-simd docs (strict provenance)" && echo
+    MIRIFLAGS="-Zmiri-strict-provenance" \
       cargo miri test --doc
     ;;
 more)
