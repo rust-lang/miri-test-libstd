@@ -37,6 +37,9 @@ jobs:
             ~/.cargo/bin/
             ~/.cargo/.crates.toml
             ~/.cargo/.crates2.json
+          # FIXME: this does not work as intended!
+          # GHA caches are write-once, so if xargo updates we will keep having
+          # old xargo in our cache.
           key: ${{ runner.os }}-cargo-bin
       - name: Setup environment
         run: bash ./ci-setup.sh
