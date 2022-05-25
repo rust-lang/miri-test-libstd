@@ -16,8 +16,9 @@ core)
     echo && echo "## Testing core (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
              ./run-test.sh core --lib --tests 2>&1 | ts -i '%.s  '
-    echo && echo "## Testing core docs (strict provenance)" && echo
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
+    # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
+    echo && echo "## Testing core docs" && echo
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
              ./run-test.sh core --doc
     ;;
 alloc)
