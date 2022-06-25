@@ -8,7 +8,7 @@ on:
     branches:
       - 'master'
   schedule:
-    - cron: '30 2 * * *' # At 02:30 UTC every day (rustup-components-history runs at 2:00 UTC).
+    - cron: '00 2 * * *' # At 02:00 UTC every day (like rustup-components-history).
 
 jobs:
   test-core:

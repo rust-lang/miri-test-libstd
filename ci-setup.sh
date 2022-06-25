@@ -9,11 +9,11 @@ echo
 
 # And of course we need Rust
 if [[ "$GITHUB_EVENT_NAME" == 'schedule' ]]; then
-    RUST_TOOLCHAIN=nightly-$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri)
+    RUST_TOOLCHAIN=nightly
 else
     RUST_TOOLCHAIN=$(cat rust-version)
 fi
 echo "Installing Rust version: $RUST_TOOLCHAIN"
-rustup default $RUST_TOOLCHAIN
-rustup component add rust-src miri
+rustup toolchain install "$RUST_TOOLCHAIN$ --component miri
+rustup override set "$RUST_TOOLCHAIN$"
 cargo miri setup
