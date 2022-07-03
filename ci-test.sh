@@ -33,7 +33,7 @@ simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
-      cargo miri test --lib --tests
+      cargo miri test --lib --tests 2>&1 | ts -i '%.s  '
     echo && echo "## Testing portable-simd docs (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
       cargo miri test --doc
@@ -42,7 +42,7 @@ more)
     cd more_tests
     echo && echo "## Testing more" && echo
     MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-strict-provenance" \
-      cargo miri test
+      cargo miri test --lib --tests 2>&1 | ts -i '%.s  '
     ;;
 *)
     echo "Unknown command"
