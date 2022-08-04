@@ -35,6 +35,7 @@ std)
              ./run-test.sh std --lib --tests -- env:: set_var x86_all 2>&1 | ts -i '%.s  '
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
              ./run-test.sh std --doc -- env::
+    ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo
