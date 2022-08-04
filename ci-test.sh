@@ -39,11 +39,11 @@ std)
     # Only test a few things here with permissive flags, we are still testing the waters.
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
-        -- env:: set_var x86_all \
+        -- env:: ffi:: set_var x86_all \
         2>&1 | ts -i '%.s  '
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
-        -- env:: \
+        -- env:: ffi:: \
         2>&1 | ts -i '%.s  '
     ;;
 simd)
