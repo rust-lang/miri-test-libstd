@@ -2,6 +2,8 @@ This repository serves to run the libcore and liballoc unit test suites in [Miri
 
 Every night, a Travis cron job runs the tests against the latest nightly, to make sure we notice when changes in Rust or Miri break a test.
 
+You can also run the libstd test suites, but note that large parts of them will fail due to relying on platform-specific APIs that Miri does not implement.
+
 ### Running the tests yourself
 
 To run the tests yourself, make sure you have Miri installed (`rustup component add miri`) and then run:

@@ -2,5 +2,17 @@
 members = [
   "core_miri_test",
   "alloc_miri_test",
+  "std_miri_test",
   "more_tests",
 ]
+
+exclude = [
+  # stdarch has its own Cargo workspace
+  "library/stdarch",
+]
+
+[patch.crates-io]
+# We have our own version of these, that forward to the actual sysroot.
+# (We want to *avoid* doing an actual std build here.)
+rustc-std-workspace-core = { path = 'rustc-std-workspace-core' }
+rustc-std-workspace-alloc = { path = 'rustc-std-workspace-alloc' }

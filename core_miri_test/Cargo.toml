@@ -8,7 +8,7 @@ edition = "2021"
 
 [lib]
 name = "core_miri_test"
-path = "../libcore/src/lib.rs"
+path = "../library/core/src/lib.rs"
 test = false
 bench = false
 
@@ -20,7 +20,7 @@ miri-test-libstd = []
 
 [[test]]
 name = "coretests"
-path = "../libcore/tests/lib.rs"
+path = "../library/core/tests/lib.rs"
 
 [dev-dependencies]
 rand = "0.7"

@@ -1,0 +1,42 @@
+[package]
+name = "std_miri_test"
+version = "0.0.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rust-lang/rust.git"
+description = "The Rust Standard Library"
+autotests = false
+autobenches = false
+edition = "2021"
+build = "../library/std/build.rs"
+
+[lib]
+name = "std_miri_test"
+path = "../library/std/src/lib.rs"
+
+[dependencies]
+# only those that we actually neeed; most can be implicitly fetched from the sysroot it seems.
+alloc = { package = "rustc-std-workspace-alloc", path = "../rustc-std-workspace-alloc" }
+cfg-if = { version = "0.1.8", features = ['rustc-dep-of-std'] }
+core = { package = "rustc-std-workspace-core", path = "../rustc-std-workspace-core" }
+libc = { version = "0.2.126", default-features = false, features = ['rustc-dep-of-std'] }
+hashbrown = { version = "0.12", default-features = false, features = ['rustc-dep-of-std'] }
+std_detect = { path = "../library/stdarch/crates/std_detect", default-features = false, features = ['rustc-dep-of-std'] }
+rustc-demangle = { version = "0.1.21", features = ['rustc-dep-of-std'] }
+
+[dev-dependencies]
+rand = "0.7"
+
+[features]
+# Empty this crate
+default = ["miri-test-libstd"]
+miri-test-libstd = []
+
+[[test]]
+name = "env"
+path = "../library/std/tests/env.rs"
+
+[[test]]
+name = "thread"
+path = "../library/std/tests/thread.rs"
+
+# Deliberately skipping run-time-detect

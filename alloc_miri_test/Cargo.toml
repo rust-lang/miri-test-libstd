@@ -1,5 +1,4 @@
 [package]
-authors = ["The Rust Project Developers"]
 name = "alloc_miri_test"
 version = "0.0.0"
 autotests = false
@@ -8,7 +7,7 @@ edition = "2021"
 
 [lib]
 name = "alloc_miri_test"
-path = "../liballoc/src/lib.rs"
+path = "../library/alloc/src/lib.rs"
 
 [features]
 # Empty this crate to avoid two copies of liballoc.
@@ -24,4 +23,4 @@ rand_xorshift = "0.2"
 
 [[test]]
 name = "collectionstests"
-path = "../liballoc/tests/lib.rs"
+path = "../library/alloc/tests/lib.rs"

@@ -1,5 +1,4 @@
 target
 Cargo.lock
 rust-src-patched
-libcore
-liballoc
+library

@@ -29,10 +29,12 @@ MIRI_LIB_SRC=$(python -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' 
 export MIRI_LIB_SRC
 
 # update symlink
-rm -f lib$CRATE
-ln -s "$MIRI_LIB_SRC"/$CRATE lib$CRATE
+rm -f library
+ln -s "$MIRI_LIB_SRC" library
+
+# use the rust-src lockfile
+cp "$(rustc --print sysroot)/lib/rustlib/src/rust/Cargo.lock" Cargo.lock
 
 # run test
 cd ./${CRATE}_miri_test
-cargo miri setup
 cargo miri test "$@"
