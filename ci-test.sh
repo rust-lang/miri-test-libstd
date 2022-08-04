@@ -37,13 +37,14 @@ alloc)
     ;;
 std)
     # Only test a few things here with permissive flags, we are still testing the waters.
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+    MODULES="env:: ffi:: buffered:: mpsc:: thread::"
+    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
-        -- env:: ffi:: set_var x86_all \
+        -- $MODULES \
         2>&1 | ts -i '%.s  '
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
-        -- env:: ffi:: \
+        -- $MODULES \
         2>&1 | ts -i '%.s  '
     ;;
 simd)
@@ -55,13 +56,6 @@ simd)
     echo && echo "## Testing portable-simd docs (strict provenance)" && echo
     MIRIFLAGS="-Zmiri-strict-provenance" \
         cargo miri test --doc \
-        2>&1 | ts -i '%.s  '
-    ;;
-more)
-    cd more_tests
-    echo && echo "## Testing more" && echo
-    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-strict-provenance" \
-        cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
     ;;
 *)

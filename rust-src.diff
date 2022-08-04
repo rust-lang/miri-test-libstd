@@ -10,6 +10,45 @@ index 8b6f4054851..a6f3593addc 100644
  #![allow(unused_attributes)]
  #![stable(feature = "alloc", since = "1.36.0")]
  #![doc(
+diff --git a/library/alloc/src/sync/tests.rs b/library/alloc/src/sync/tests.rs
+index 202d0e7f020..27f86fe98b4 100644
+--- a/library/alloc/src/sync/tests.rs
++++ b/library/alloc/src/sync/tests.rs
+@@ -618,3 +618,21 @@ struct TwoRefs {
+     assert_eq!(Arc::strong_count(&two_refs), 3);
+     assert_eq!(Arc::weak_count(&two_refs), 2);
+ }
++
++/// Test for Arc::drop bug (https://github.com/rust-lang/rust/issues/55005)
++#[test]
++#[cfg(miri)] // relies on Stacked Borrows in Miri
++fn arc_drop_dereferenceable_race() {
++    // The bug seems to take up to 700 iterations to reproduce with most seeds (tested 0-9).
++    for _ in 0..750 {
++        let arc_1 = Arc::new(());
++        let arc_2 = arc_1.clone();
++        let thread = thread::spawn(|| drop(arc_2));
++        let mut i = 0;
++        while i < 256 {
++            i += 1;
++        }
++        drop(arc_1);
++        thread.join().unwrap();
++    }
++}
+diff --git a/library/std/src/io/buffered/tests.rs b/library/std/src/io/buffered/tests.rs
+index fe45b132638..1e8cc59a455 100644
+--- a/library/std/src/io/buffered/tests.rs
++++ b/library/std/src/io/buffered/tests.rs
+@@ -3,7 +3,7 @@
+ use crate::mem::MaybeUninit;
+ use crate::panic;
+ use crate::sync::atomic::{AtomicUsize, Ordering};
+-use crate::thread;
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ /// A dummy reader intended at testing short-reads propagation.
+ pub struct ShortReader {
 diff --git a/library/std/src/lib.rs b/library/std/src/lib.rs
 index 6b0c0ad7c21..d838f183e37 100644
 --- a/library/std/src/lib.rs
@@ -29,3 +68,258 @@ index 6b0c0ad7c21..d838f183e37 100644
  #![cfg_attr(not(feature = "restricted-std"), stable(feature = "rust1", since = "1.0.0"))]
  #![cfg_attr(feature = "restricted-std", unstable(feature = "restricted_std", issue = "none"))]
  #![doc(
+diff --git a/library/std/src/sync/mpsc/mpsc_queue/tests.rs b/library/std/src/sync/mpsc/mpsc_queue/tests.rs
+index 9f4f31ed051..1095d656c47 100644
+--- a/library/std/src/sync/mpsc/mpsc_queue/tests.rs
++++ b/library/std/src/sync/mpsc/mpsc_queue/tests.rs
+@@ -1,7 +1,7 @@
+ use super::{Data, Empty, Inconsistent, Queue};
+ use crate::sync::mpsc::channel;
+ use crate::sync::Arc;
+-use crate::thread;
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ #[test]
+ fn test_full() {
+@@ -13,7 +13,7 @@ fn test_full() {
+ #[test]
+ fn test() {
+     let nthreads = 8;
+-    let nmsgs = 1000;
++    let nmsgs = if cfg!(miri) { 100 } else { 1000 };
+     let q = Queue::new();
+     match q.pop() {
+         Empty => {}
+diff --git a/library/std/src/sync/mpsc/spsc_queue/tests.rs b/library/std/src/sync/mpsc/spsc_queue/tests.rs
+index 467ef3dbdcb..7d0146b74cb 100644
+--- a/library/std/src/sync/mpsc/spsc_queue/tests.rs
++++ b/library/std/src/sync/mpsc/spsc_queue/tests.rs
+@@ -1,7 +1,7 @@
+ use super::Queue;
+ use crate::sync::mpsc::channel;
+ use crate::sync::Arc;
+-use crate::thread;
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ #[test]
+ fn smoke() {
+@@ -77,12 +77,13 @@ fn stress() {
+     }
+ 
+     unsafe fn stress_bound(bound: usize) {
++        let count = if cfg!(miri) { 1000 } else { 100000 };
+         let q = Arc::new(Queue::with_additions(bound, (), ()));
+ 
+         let (tx, rx) = channel();
+         let q2 = q.clone();
+         let _t = thread::spawn(move || {
+-            for _ in 0..100000 {
++            for _ in 0..count {
+                 loop {
+                     match q2.pop() {
+                         Some(1) => break,
+@@ -93,7 +94,7 @@ unsafe fn stress_bound(bound: usize) {
+             }
+             tx.send(()).unwrap();
+         });
+-        for _ in 0..100000 {
++        for _ in 0..count {
+             q.push(1);
+         }
+         rx.recv().unwrap();
+diff --git a/library/std/src/sync/mpsc/sync_tests.rs b/library/std/src/sync/mpsc/sync_tests.rs
+index e58649bab6e..49ccb60a5c6 100644
+--- a/library/std/src/sync/mpsc/sync_tests.rs
++++ b/library/std/src/sync/mpsc/sync_tests.rs
+@@ -1,7 +1,7 @@
+ use super::*;
+ use crate::env;
+-use crate::thread;
+ use crate::time::Duration;
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ pub fn stress_factor() -> usize {
+     match env::var("RUST_TEST_STRESS") {
+@@ -113,23 +113,25 @@ fn chan_gone_concurrent() {
+ 
+ #[test]
+ fn stress() {
++    let count = if cfg!(miri) { 100 } else { 10000 };
+     let (tx, rx) = sync_channel::<i32>(0);
+     thread::spawn(move || {
+-        for _ in 0..10000 {
++        for _ in 0..count {
+             tx.send(1).unwrap();
+         }
+     });
+-    for _ in 0..10000 {
++    for _ in 0..count {
+         assert_eq!(rx.recv().unwrap(), 1);
+     }
+ }
+ 
+ #[test]
+ fn stress_recv_timeout_two_threads() {
++    let count = if cfg!(miri) { 100 } else { 10000 };
+     let (tx, rx) = sync_channel::<i32>(0);
+ 
+     thread::spawn(move || {
+-        for _ in 0..10000 {
++        for _ in 0..count {
+             tx.send(1).unwrap();
+         }
+     });
+@@ -146,12 +148,12 @@ fn stress_recv_timeout_two_threads() {
+         }
+     }
+ 
+-    assert_eq!(recv_count, 10000);
++    assert_eq!(recv_count, count);
+ }
+ 
+ #[test]
+ fn stress_recv_timeout_shared() {
+-    const AMT: u32 = 1000;
++    const AMT: u32 = if cfg!(miri) { 100 } else { 1000 };
+     const NTHREADS: u32 = 8;
+     let (tx, rx) = sync_channel::<i32>(0);
+     let (dtx, drx) = sync_channel::<()>(0);
+@@ -191,7 +193,7 @@ fn stress_recv_timeout_shared() {
+ 
+ #[test]
+ fn stress_shared() {
+-    const AMT: u32 = 1000;
++    const AMT: u32 = if cfg!(miri) { 100 } else { 1000 };
+     const NTHREADS: u32 = 8;
+     let (tx, rx) = sync_channel::<i32>(0);
+     let (dtx, drx) = sync_channel::<()>(0);
+@@ -438,12 +440,13 @@ fn recv(rx: Receiver<Box<i32>>, i: i32) {
+ 
+ #[test]
+ fn recv_a_lot() {
++    let count = if cfg!(miri) { 1000 } else { 10000 };
+     // Regression test that we don't run out of stack in scheduler context
+-    let (tx, rx) = sync_channel(10000);
+-    for _ in 0..10000 {
++    let (tx, rx) = sync_channel(count);
++    for _ in 0..count {
+         tx.send(()).unwrap();
+     }
+-    for _ in 0..10000 {
++    for _ in 0..count {
+         rx.recv().unwrap();
+     }
+ }
+diff --git a/library/std/src/sync/mpsc/tests.rs b/library/std/src/sync/mpsc/tests.rs
+index 4deb3e59615..699f14512cb 100644
+--- a/library/std/src/sync/mpsc/tests.rs
++++ b/library/std/src/sync/mpsc/tests.rs
+@@ -1,7 +1,7 @@
+ use super::*;
+ use crate::env;
+-use crate::thread;
+ use crate::time::{Duration, Instant};
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ pub fn stress_factor() -> usize {
+     match env::var("RUST_TEST_STRESS") {
+@@ -120,13 +120,14 @@ fn chan_gone_concurrent() {
+ 
+ #[test]
+ fn stress() {
++    let count = if cfg!(miri) { 100 } else { 10000 };
+     let (tx, rx) = channel::<i32>();
+     let t = thread::spawn(move || {
+-        for _ in 0..10000 {
++        for _ in 0..count {
+             tx.send(1).unwrap();
+         }
+     });
+-    for _ in 0..10000 {
++    for _ in 0..count {
+         assert_eq!(rx.recv().unwrap(), 1);
+     }
+     t.join().ok().expect("thread panicked");
+@@ -134,7 +135,7 @@ fn stress() {
+ 
+ #[test]
+ fn stress_shared() {
+-    const AMT: u32 = 10000;
++    const AMT: u32 = if cfg!(miri) { 100 } else { 10000 };
+     const NTHREADS: u32 = 8;
+     let (tx, rx) = channel::<i32>();
+ 
+@@ -504,12 +505,13 @@ fn very_long_recv_timeout_wont_panic() {
+ 
+ #[test]
+ fn recv_a_lot() {
++    let count = if cfg!(miri) { 1000 } else { 10000 };
+     // Regression test that we don't run out of stack in scheduler context
+     let (tx, rx) = channel();
+-    for _ in 0..10000 {
++    for _ in 0..count {
+         tx.send(()).unwrap();
+     }
+-    for _ in 0..10000 {
++    for _ in 0..count {
+         rx.recv().unwrap();
+     }
+ }
+diff --git a/library/std/src/thread/local/tests.rs b/library/std/src/thread/local/tests.rs
+index 1df1ca758c0..51d77514193 100644
+--- a/library/std/src/thread/local/tests.rs
++++ b/library/std/src/thread/local/tests.rs
+@@ -1,8 +1,9 @@
+ use crate::cell::{Cell, UnsafeCell};
+ use crate::sync::atomic::{AtomicU8, Ordering};
+ use crate::sync::mpsc::{channel, Sender};
+-use crate::thread::{self, LocalKey};
++use crate::thread::LocalKey;
+ use crate::thread_local;
++use realstd::thread; // Miri needs the version in real `std`
+ 
+ struct Foo(Sender<()>);
+ 
+diff --git a/library/std/src/thread/tests.rs b/library/std/src/thread/tests.rs
+index ec68b529188..c36fdb38e36 100644
+--- a/library/std/src/thread/tests.rs
++++ b/library/std/src/thread/tests.rs
+@@ -1,4 +1,3 @@
+-use super::Builder;
+ use crate::any::Any;
+ use crate::mem;
+ use crate::panic::panic_any;
+@@ -8,9 +7,9 @@
+     mpsc::{channel, Sender},
+     Arc, Barrier,
+ };
+-use crate::thread::{self, Scope, ThreadId};
+ use crate::time::Duration;
+ use crate::time::Instant;
++use realstd::thread::{self, Builder, Scope, ThreadId}; // Miri needs the version in real `std`
+ 
+ // !!! These tests are dangerous. If something is buggy, they will hang, !!!
+ // !!! instead of exiting cleanly. This might wedge the buildbots.       !!!
+@@ -329,3 +328,22 @@ fn foo(x: &u8) {
+     let x = 42_u8;
+     foo(&x);
+ }
++
++// Regression test for https://github.com/rust-lang/rust/issues/98498.
++#[test]
++#[cfg(miri)] // relies on Miri's data race detector
++fn scope_join_race() {
++    for _ in 0..100 {
++        let a_bool = AtomicBool::new(false);
++
++        thread::scope(|s| {
++            for _ in 0..5 {
++                s.spawn(|| a_bool.load(Ordering::Relaxed));
++            }
++
++            for _ in 0..5 {
++                s.spawn(|| a_bool.load(Ordering::Relaxed));
++            }
++        });
++    }
++}
