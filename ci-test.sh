@@ -29,6 +29,12 @@ alloc)
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
              ./run-test.sh alloc --doc
     ;;
+std)
+    # Only test a few things here with permissive flags, we are still testing the waters.
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+             ./run-test.sh std --lib --tests -- env:: set_var x86_all 2>&1 | ts -i '%.s  '
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+             ./run-test.sh std --doc -- env::
 simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo

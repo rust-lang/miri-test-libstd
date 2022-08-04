@@ -39,4 +39,6 @@ path = "../library/std/tests/env.rs"
 name = "thread"
 path = "../library/std/tests/thread.rs"
 
-# Deliberately skipping run-time-detect
+[[test]]
+name = "run-time-detect"
+path = "../library/std/tests/run-time-detect.rs"

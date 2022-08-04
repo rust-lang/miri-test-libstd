@@ -46,6 +46,25 @@ jobs:
       - name: Test
         run: bash ./ci-test.sh alloc
 
+  test-std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+          # FIXME: this does not work as intended!
+          # GHA caches are write-once, so if xargo updates we will keep having
+          # old xargo in our cache.
+          key: ${{ runner.os }}-cargo-bin
+      - name: Setup environment
+        run: bash ./ci-setup.sh
+      - name: Test
+        run: bash ./ci-test.sh std
+
   test-simd:
     runs-on: ubuntu-latest
     steps:
