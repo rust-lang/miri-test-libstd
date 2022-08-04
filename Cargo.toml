@@ -3,10 +3,10 @@ members = [
   "core_miri_test",
   "alloc_miri_test",
   "std_miri_test",
-  "more_tests",
 ]
 
 exclude = [
+  "more_tests",
   # stdarch has its own Cargo workspace
   "library/stdarch",
 ]
