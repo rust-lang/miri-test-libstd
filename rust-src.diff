@@ -11,10 +11,10 @@ index 8b6f4054851..a6f3593addc 100644
  #![stable(feature = "alloc", since = "1.36.0")]
  #![doc(
 diff --git a/library/std/src/lib.rs b/library/std/src/lib.rs
-index 6b0c0ad7c21..1a2439f3295 100644
+index 6b0c0ad7c21..d838f183e37 100644
 --- a/library/std/src/lib.rs
 +++ b/library/std/src/lib.rs
-@@ -187,6 +187,12 @@
+@@ -187,6 +187,14 @@
  //! [rust-discord]: https://discord.gg/rust-lang
  //! [array]: prim@array
  //! [slice]: prim@slice
@@ -23,6 +23,8 @@ index 6b0c0ad7c21..1a2439f3295 100644
 +// able to "empty" this crate. See <https://github.com/rust-lang/miri-test-libstd/issues/4>.
 +// rustc itself never sets the feature, so this line has no affect there.
 +#![cfg(any(not(feature = "miri-test-libstd"), test, doctest))]
++// miri-test-libstd also prefers to make std use the sysroot versions of the dependencies.
++#![cfg_attr(feature = "miri-test-libstd", feature(rustc_private))]
 +//
  #![cfg_attr(not(feature = "restricted-std"), stable(feature = "rust1", since = "1.0.0"))]
  #![cfg_attr(feature = "restricted-std", unstable(feature = "restricted_std", issue = "none"))]

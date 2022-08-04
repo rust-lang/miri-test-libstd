@@ -1,0 +1,7 @@
+[package]
+name = "rustc-demangle"
+version = "1.99.0"
+license = 'MIT OR Apache-2.0'
+
+[lib]
+path = "lib.rs"
