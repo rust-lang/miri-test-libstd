@@ -36,9 +36,10 @@ alloc)
         2>&1 | ts -i '%.s  '
     ;;
 std)
-    # Only test a few things here with permissive flags, we are still testing the waters.
-    MODULES="env:: ffi:: buffered:: sync:: thread:: error:: collections:: backtrace::"
-    SKIP=$(for M in io::error::; do echo "--skip $M "; done)
+    # Only test modules we checked; we cannot yet handle all of it.
+    MODULES="env:: ffi:: io:: sync:: thread:: error:: collections:: backtrace::"
+    SKIP=$(for M in fs:: net:: io::error::; do echo "--skip $M "; done) # io::error needs https://github.com/rust-lang/miri/pull/2465
+    # hashbrown does int2ptr casts, so we need permissive provenance.
     echo && echo "## Testing std ($MODULES)" && echo
     MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
