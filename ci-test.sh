@@ -38,10 +38,12 @@ alloc)
 std)
     # Only test a few things here with permissive flags, we are still testing the waters.
     MODULES="env:: ffi:: buffered:: mpsc:: thread::"
+    echo && echo "## Testing std ($MODULES)" && echo
     MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
         -- $MODULES \
         2>&1 | ts -i '%.s  '
+    echo && echo "## Testing std docs ($MODULES)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
         -- $MODULES \
