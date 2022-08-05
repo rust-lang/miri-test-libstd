@@ -168,6 +168,45 @@ index 6b0c0ad7c21..d838f183e37 100644
  #![cfg_attr(not(feature = "restricted-std"), stable(feature = "rust1", since = "1.0.0"))]
  #![cfg_attr(feature = "restricted-std", unstable(feature = "restricted_std", issue = "none"))]
  #![doc(
+diff --git a/library/std/src/sync/barrier/tests.rs b/library/std/src/sync/barrier/tests.rs
+index 834a3e75158..4af0f626de0 100644
+--- a/library/std/src/sync/barrier/tests.rs
++++ b/library/std/src/sync/barrier/tests.rs
+@@ -1,6 +1,6 @@
+ use crate::sync::mpsc::{channel, TryRecvError};
+ use crate::sync::{Arc, Barrier};
+-use crate::thread;
++use realstd::thread;
+ 
+ #[test]
+ #[cfg_attr(target_os = "emscripten", ignore)]
+diff --git a/library/std/src/sync/condvar/tests.rs b/library/std/src/sync/condvar/tests.rs
+index 24f467f0b03..f70c4f96240 100644
+--- a/library/std/src/sync/condvar/tests.rs
++++ b/library/std/src/sync/condvar/tests.rs
+@@ -1,7 +1,7 @@
+ use crate::sync::atomic::{AtomicBool, Ordering};
+ use crate::sync::mpsc::channel;
+ use crate::sync::{Arc, Condvar, Mutex};
+-use crate::thread;
++use realstd::thread;
+ use crate::time::Duration;
+ 
+ #[test]
+diff --git a/library/std/src/sync/lazy_lock/tests.rs b/library/std/src/sync/lazy_lock/tests.rs
+index f11b66bfca5..a8c5ed684dd 100644
+--- a/library/std/src/sync/lazy_lock/tests.rs
++++ b/library/std/src/sync/lazy_lock/tests.rs
+@@ -6,8 +6,8 @@
+         Mutex,
+     },
+     sync::{LazyLock, OnceLock},
+-    thread,
+ };
++use realstd::thread;
+ 
+ fn spawn_and_wait<R: Send + 'static>(f: impl FnOnce() -> R + Send + 'static) -> R {
+     thread::spawn(f).join().unwrap()
 diff --git a/library/std/src/sync/mpsc/mpsc_queue/tests.rs b/library/std/src/sync/mpsc/mpsc_queue/tests.rs
 index 9f4f31ed051..1095d656c47 100644
 --- a/library/std/src/sync/mpsc/mpsc_queue/tests.rs
@@ -365,10 +404,59 @@ index 4deb3e59615..699f14512cb 100644
          rx.recv().unwrap();
      }
  }
+diff --git a/library/std/src/sync/mutex/tests.rs b/library/std/src/sync/mutex/tests.rs
+index 93900566f11..e5cb77707c5 100644
+--- a/library/std/src/sync/mutex/tests.rs
++++ b/library/std/src/sync/mutex/tests.rs
+@@ -1,7 +1,7 @@
+ use crate::sync::atomic::{AtomicUsize, Ordering};
+ use crate::sync::mpsc::channel;
+ use crate::sync::{Arc, Condvar, Mutex};
+-use crate::thread;
++use realstd::thread;
+ 
+ struct Packet<T>(Arc<(Mutex<T>, Condvar)>);
+ 
+diff --git a/library/std/src/sync/once/tests.rs b/library/std/src/sync/once/tests.rs
+index 0c35597e11c..63e20f102f0 100644
+--- a/library/std/src/sync/once/tests.rs
++++ b/library/std/src/sync/once/tests.rs
+@@ -1,7 +1,7 @@
+ use super::Once;
+ use crate::panic;
+ use crate::sync::mpsc::channel;
+-use crate::thread;
++use realstd::thread;
+ 
+ #[test]
+ fn smoke_once() {
+diff --git a/library/std/src/sync/once_lock/tests.rs b/library/std/src/sync/once_lock/tests.rs
+index 46695225b9f..d96ac1f005a 100644
+--- a/library/std/src/sync/once_lock/tests.rs
++++ b/library/std/src/sync/once_lock/tests.rs
+@@ -5,8 +5,8 @@
+         atomic::{AtomicUsize, Ordering::SeqCst},
+         mpsc::channel,
+     },
+-    thread,
+ };
++use realstd::thread;
+ 
+ fn spawn_and_wait<R: Send + 'static>(f: impl FnOnce() -> R + Send + 'static) -> R {
+     thread::spawn(f).join().unwrap()
 diff --git a/library/std/src/sync/rwlock/tests.rs b/library/std/src/sync/rwlock/tests.rs
-index 08255c985f5..b5b3ad9898e 100644
+index 08255c985f5..2d855a6027b 100644
 --- a/library/std/src/sync/rwlock/tests.rs
 +++ b/library/std/src/sync/rwlock/tests.rs
+@@ -1,7 +1,7 @@
+ use crate::sync::atomic::{AtomicUsize, Ordering};
+ use crate::sync::mpsc::channel;
+ use crate::sync::{Arc, RwLock, RwLockReadGuard, TryLockError};
+-use crate::thread;
++use realstd::thread;
+ use rand::{self, Rng};
+ 
+ #[derive(Eq, PartialEq, Debug)]
 @@ -19,7 +19,7 @@ fn smoke() {
  #[test]
  fn frob() {
