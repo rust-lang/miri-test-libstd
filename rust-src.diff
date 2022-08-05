@@ -128,6 +128,19 @@ index fe45b132638..1e8cc59a455 100644
  
  /// A dummy reader intended at testing short-reads propagation.
  pub struct ShortReader {
+diff --git a/library/std/src/io/stdio/tests.rs b/library/std/src/io/stdio/tests.rs
+index f89fd27ce6c..10a117c3dfa 100644
+--- a/library/std/src/io/stdio/tests.rs
++++ b/library/std/src/io/stdio/tests.rs
+@@ -1,7 +1,7 @@
+ use super::*;
+ use crate::panic::{RefUnwindSafe, UnwindSafe};
+ use crate::sync::mpsc::sync_channel;
+-use crate::thread;
++use realstd::thread;
+ 
+ #[test]
+ fn stdout_unwind_safe() {
 diff --git a/library/std/src/io/tests.rs b/library/std/src/io/tests.rs
 index f357f33ec52..68a19eccc0e 100644
 --- a/library/std/src/io/tests.rs
