@@ -344,6 +344,19 @@ index 4deb3e59615..699f14512cb 100644
          rx.recv().unwrap();
      }
  }
+diff --git a/library/std/src/sync/rwlock/tests.rs b/library/std/src/sync/rwlock/tests.rs
+index 08255c985f5..b5b3ad9898e 100644
+--- a/library/std/src/sync/rwlock/tests.rs
++++ b/library/std/src/sync/rwlock/tests.rs
+@@ -19,7 +19,7 @@ fn smoke() {
+ #[test]
+ fn frob() {
+     const N: u32 = 10;
+-    const M: usize = 1000;
++    const M: usize = if cfg!(miri) { 100 } else { 1000 };
+ 
+     let r = Arc::new(RwLock::new(()));
+ 
 diff --git a/library/std/src/thread/local/tests.rs b/library/std/src/thread/local/tests.rs
 index 1df1ca758c0..51d77514193 100644
 --- a/library/std/src/thread/local/tests.rs
