@@ -71,12 +71,12 @@ std)
         $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
     # Test some very OS-specific parts also with other OSes.
-    # TODO: Add env:: sync:: thread::
+    # TODO: Add env:: once https://github.com/rust-lang/miri/pull/2470 lands.
     for TARGET in aarch64-apple-darwin; do
         echo && echo "## Testing some OS-specific parts of std ($TARGET)" && echo
         MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
             ./run-test.sh std --lib --tests \
-            -- time:: \
+            -- time:: sync:: thread:: \
             2>&1 | ts -i '%.s  '
     done
     ;;
