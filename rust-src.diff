@@ -181,6 +181,50 @@ index 6b0c0ad7c21..d838f183e37 100644
  #![cfg_attr(not(feature = "restricted-std"), stable(feature = "rust1", since = "1.0.0"))]
  #![cfg_attr(feature = "restricted-std", unstable(feature = "restricted_std", issue = "none"))]
  #![doc(
+diff --git a/library/std/src/path/tests.rs b/library/std/src/path/tests.rs
+index 351cf698810..dd307022c6d 100644
+--- a/library/std/src/path/tests.rs
++++ b/library/std/src/path/tests.rs
+@@ -1768,6 +1768,7 @@ macro_rules! unchanged(
+ }
+ 
+ #[bench]
++#[cfg_attr(miri, ignore)] // Miri isn't fast...
+ fn bench_path_cmp_fast_path_buf_sort(b: &mut test::Bencher) {
+     let prefix = "my/home";
+     let mut paths: Vec<_> =
+@@ -1781,6 +1782,7 @@ fn bench_path_cmp_fast_path_buf_sort(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
++#[cfg_attr(miri, ignore)] // Miri isn't fast...
+ fn bench_path_cmp_fast_path_long(b: &mut test::Bencher) {
+     let prefix = "/my/home/is/my/castle/and/my/castle/has/a/rusty/workbench/";
+     let paths: Vec<_> =
+@@ -1799,6 +1801,7 @@ fn bench_path_cmp_fast_path_long(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
++#[cfg_attr(miri, ignore)] // Miri isn't fast...
+ fn bench_path_cmp_fast_path_short(b: &mut test::Bencher) {
+     let prefix = "my/home";
+     let paths: Vec<_> =
+@@ -1817,6 +1820,7 @@ fn bench_path_cmp_fast_path_short(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
++#[cfg_attr(miri, ignore)] // Miri isn't fast...
+ fn bench_path_hashset(b: &mut test::Bencher) {
+     let prefix = "/my/home/is/my/castle/and/my/castle/has/a/rusty/workbench/";
+     let paths: Vec<_> =
+@@ -1835,6 +1839,7 @@ fn bench_path_hashset(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
++#[cfg_attr(miri, ignore)] // Miri isn't fast...
+ fn bench_path_hashset_miss(b: &mut test::Bencher) {
+     let prefix = "/my/home/is/my/castle/and/my/castle/has/a/rusty/workbench/";
+     let paths: Vec<_> =
 diff --git a/library/std/src/sync/barrier/tests.rs b/library/std/src/sync/barrier/tests.rs
 index 834a3e75158..4af0f626de0 100644
 --- a/library/std/src/sync/barrier/tests.rs
@@ -479,6 +523,19 @@ index 08255c985f5..2d855a6027b 100644
  
      let r = Arc::new(RwLock::new(()));
  
+diff --git a/library/std/src/sys_common/remutex/tests.rs b/library/std/src/sys_common/remutex/tests.rs
+index 64873b850d3..489bd91fec0 100644
+--- a/library/std/src/sys_common/remutex/tests.rs
++++ b/library/std/src/sys_common/remutex/tests.rs
+@@ -3,7 +3,7 @@
+ use crate::pin::Pin;
+ use crate::sync::Arc;
+ use crate::sys_common::remutex::{ReentrantMutex, ReentrantMutexGuard};
+-use crate::thread;
++use realstd::thread;
+ 
+ #[test]
+ fn smoke() {
 diff --git a/library/std/src/thread/local/tests.rs b/library/std/src/thread/local/tests.rs
 index 1df1ca758c0..51d77514193 100644
 --- a/library/std/src/thread/local/tests.rs
@@ -537,3 +594,29 @@ index ec68b529188..c36fdb38e36 100644
 +        });
 +    }
 +}
+diff --git a/library/std/src/time/tests.rs b/library/std/src/time/tests.rs
+index d710a574465..aac077d2513 100644
+--- a/library/std/src/time/tests.rs
++++ b/library/std/src/time/tests.rs
+@@ -29,9 +29,10 @@ fn instant_monotonic() {
+ fn instant_monotonic_concurrent() -> crate::thread::Result<()> {
+     let threads: Vec<_> = (0..8)
+         .map(|_| {
+-            crate::thread::spawn(|| {
++            realstd::thread::spawn(|| {
+                 let mut old = Instant::now();
+-                for _ in 0..5_000_000 {
++                let count = if cfg!(miri) { 1_000 } else { 5_000_000 };
++                for _ in 0..count {
+                     let new = Instant::now();
+                     assert!(new >= old);
+                     old = new;
+@@ -205,7 +206,7 @@ fn $bench_name(b: &mut Bencher) -> crate::thread::Result<()> {
+             let threads: Vec<_> = (0..$thread_count)
+                 .map(|_| {
+                     let flag = Arc::clone(&running);
+-                    crate::thread::spawn(move || {
++                    realstd::thread::spawn(move || {
+                         while flag.load(Ordering::Relaxed) {
+                             black_box(Instant::now());
+                         }
