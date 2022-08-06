@@ -4,7 +4,7 @@ set -euo pipefail
 # apply our patch
 rm -rf rust-src-patched
 cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
-( cd rust-src-patched && patch -f -p1 < ../rust-src.diff )
+( cd rust-src-patched && patch -f -p1 < ../rust-src.diff >/dev/null )
 export MIRI_LIB_SRC=$(pwd)/rust-src-patched/library
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
@@ -13,34 +13,39 @@ core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo && echo "## Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)" && echo
+        echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
             ./run-test.sh core --target $TARGET --lib --tests \
             -- --skip align \
             2>&1 | ts -i '%.s  '
-        echo && echo "## Testing core ($TARGET, strict provenance)" && echo
+        echo "::endgroup::"
+        echo "::group::Testing core ($TARGET, strict provenance)"
         MIRIFLAGS="-Zmiri-strict-provenance" \
             ./run-test.sh core --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
+        echo "::endgroup::"
         # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
-        echo && echo "## Testing core docs ($TARGET)" && echo
+        echo "::group::Testing core docs ($TARGET)" && echo
         MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
+        echo "::endgroup::"
     done
     ;;
 alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo && echo "## Testing alloc ($TARGET, symbolic alignment, strict provenance)" && echo
+        echo "::group::Testing alloc ($TARGET, symbolic alignment, strict provenance)"
         MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
             ./run-test.sh alloc --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
-        echo && echo "## Testing alloc docs ($TARGET, strict provenance)" && echo
+        echo "::endgroup::"
+        echo "::group::Testing alloc docs ($TARGET, strict provenance)"
         MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
             ./run-test.sh alloc --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
+        echo "::endgroup::"
     done
     ;;
 std)
@@ -86,14 +91,16 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
-    echo && echo "## Testing portable-simd (strict provenance)" && echo
+    echo "::group::Testing portable-simd (strict provenance)"
     MIRIFLAGS="-Zmiri-strict-provenance" \
         cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
-    echo && echo "## Testing portable-simd docs (strict provenance)" && echo
+    echo "::endgroup::"
+    echo "::group::Testing portable-simd docs (strict provenance)"
     MIRIFLAGS="-Zmiri-strict-provenance" \
         cargo miri test --doc \
         2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
     ;;
 *)
     echo "Unknown command"
