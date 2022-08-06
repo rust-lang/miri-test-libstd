@@ -79,6 +79,7 @@ std)
         ./run-test.sh std --doc \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
+    ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo
