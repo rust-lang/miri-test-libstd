@@ -44,42 +44,41 @@ alloc)
     done
     ;;
 std)
-    # There are a bunch of modules we cannot handle yet:
+    # Core modules, that we are testing on a bunch of targets. These are the most OS-specific.
+    # TODO: add env:: here once https://github.com/rust-lang/miri/pull/2470l propagates.
+    CORE="time:: sync:: thread::"
+    # Modules that we skip entirely, because they need a lot of thims we don't support.
+    # TODO: remove most of these once some PRs propagate.
     # - f32, f64: needs https://github.com/rust-lang/miri/pull/2469
-    # - fs, net, process, sys, sys_common::net: need a lot of shims we don't support
     # - io::error: needs https://github.com/rust-lang/miri/pull/2465
     # Additionally we skip some of the integration tests:
     # - env_home_dir: needs https://github.com/rust-lang/miri/pull/2467
     # - sleep: needs https://github.com/rust-lang/miri/pull/2466
-    SKIP="f32:: f64:: fs:: net:: process:: sys:: sys_common::net:: io::error:: env_home_dir sleep"
-    # hashbrown does int2ptr casts, so we need permissive provenance.
-    # We run the tests in two batches (`sync::` and the rest), as somehow it fails on CI otherwise (are we using too much RAM?).
-    echo && echo "## Testing std (except for $SKIP)" && echo
-    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
-        ./run-test.sh std --lib --tests \
-        -- sync:: \
-        2>&1 | ts -i '%.s  '
-    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
-        ./run-test.sh std --lib --tests \
-        -- --skip sync:: \
-        $(for M in $SKIP; do echo "--skip $M "; done) \
-        2>&1 | ts -i '%.s  '
-    echo && echo "## Testing std docs (except for $SKIP)" && echo
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
-        ./run-test.sh std --doc \
-        -- \
-        $(for M in $SKIP; do echo "--skip $M "; done) \
-        2>&1 | ts -i '%.s  '
-    # Test some very OS-specific parts also with other OSes.
-    # TODO: Add env:: once https://github.com/rust-lang/miri/pull/2470 lands.
-    for TARGET in aarch64-apple-darwin; do
-        echo && echo "## Testing some OS-specific parts of std ($TARGET)" && echo
+    SKIP="fs:: net:: process:: sys:: sys_common::net:: f32:: f64:: io::error:: env_home_dir sleep"
+
+    # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
+    for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
+        echo && echo "## Testing std core ($CORE on $TARGET)" && echo
         MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
-            ./run-test.sh std --lib --tests \
-            -- time:: sync:: thread:: \
+            ./run-test.sh std --target $TARGET --lib --tests \
+            -- $CORE \
+            2>&1 | ts -i '%.s  '
+        echo && echo "## Testing std core docs ($CORE in $TARGET)" && echo
+        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+            ./run-test.sh std --target $TARGET --doc \
+            -- $CORE \
             2>&1 | ts -i '%.s  '
     done
-    ;;
+    echo && echo "## Testing remaining std (except for $SKIP)" && echo
+    MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        ./run-test.sh std --lib --tests \
+        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
+        2>&1 | ts -i '%.s  '
+    echo && echo "## Testing remaining std docs (except for $SKIP)" && echo
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        ./run-test.sh std --doc \
+        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
+        2>&1 | ts -i '%.s  '
 simd)
     cd $MIRI_LIB_SRC/portable-simd
     echo && echo "## Testing portable-simd (strict provenance)" && echo
