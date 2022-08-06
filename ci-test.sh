@@ -70,6 +70,15 @@ std)
         -- \
         $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
+    # Test some very OS-specific parts also with other OSes.
+    # TODO: Add env:: sync:: thread::
+    for TARGET in aarch64-apple-darwin; do
+        echo && echo "## Testing some OS-specific parts of std ($TARGET)" && echo
+        MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+            ./run-test.sh std --lib --tests \
+            -- time:: \
+            2>&1 | ts -i '%.s  '
+    done
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
