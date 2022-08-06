@@ -58,27 +58,31 @@ std)
 
     # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
-        echo && echo "## Testing std core ($CORE on $TARGET)" && echo
+        echo "::group::Testing std core ($CORE on $TARGET)"
         MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
             ./run-test.sh std --target $TARGET --lib --tests \
             -- $CORE \
             2>&1 | ts -i '%.s  '
-        echo && echo "## Testing std core docs ($CORE in $TARGET)" && echo
+        echo "::endgroup::"
+        echo "::group::Testing std core docs ($CORE on $TARGET)"
         MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
             ./run-test.sh std --target $TARGET --doc \
             -- $CORE \
             2>&1 | ts -i '%.s  '
+        echo "::endgroup::"
     done
-    echo && echo "## Testing remaining std (except for $SKIP)" && echo
+    echo "::group::Testing remaining std (except for $SKIP)"
     MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
-    echo && echo "## Testing remaining std docs (except for $SKIP)" && echo
+    echo "::endgroup::"
+    echo "::group::Testing remaining std docs (except for $SKIP)"
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
