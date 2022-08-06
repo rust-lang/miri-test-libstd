@@ -9,17 +9,20 @@ You can also run the libstd test suites, but note that large parts of them will 
 To run the tests yourself, make sure you have Miri installed (`rustup component add miri`) and then run:
 
 ```shell
-./run-test.sh core --all-targets
-./run-test.sh alloc --all-targets
+./run-test.sh core --lib --tests
+./run-test.sh alloc --lib --tests
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std --lib --tests -- time::
 ```
 
 This will run the test suite of the standard library of your current toolchain.
-`--all-targets` means that doc tests are skipped; those should use separate Miri flags as there are some (expected) memory leaks.
+`--lib --tests` means that doc tests are skipped; those should use separate Miri flags as there are some (expected) memory leaks.
+Use `--doc` to run only doc tests.
+For `std`, we cannot run *all* tests since they will use networking and file system APIs that we do not support.
 
 If you are working on the standard library and want to check that the tests pass with your modifications, set `MIRI_LIB_SRC` to the `library` folder of the checkout you are working in:
 
 ```shell
-MIRI_LIB_SRC=~/path/to/rustc/library ./run-test.sh core --all-targets
+MIRI_LIB_SRC=~/path/to/rustc/library ./run-test.sh core --lib --tests
 ```
 
 Here, `~/path/to/rustc` should be the directory containing `x.py`.
@@ -34,4 +37,5 @@ and `MIRIFLAGS` can be used as usual to pass parameters to Miri:
 MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" ./run-test.sh alloc --doc -- --skip vec
 ```
 
-If you want to know how long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command.
+If you want to know how long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command,
+or use the test flags `-Zunstable-options --report-time` (the latter option also requires `-Zmiri-disable-isolation` in the Miri flags).
