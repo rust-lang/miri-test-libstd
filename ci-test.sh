@@ -36,19 +36,26 @@ alloc)
         2>&1 | ts -i '%.s  '
     ;;
 std)
-    # Only test modules we checked; we cannot yet handle all of it.
-    MODULES="env:: ffi:: io:: sync:: thread:: error:: collections:: backtrace::"
-    SKIP=$(for M in fs:: net:: io::error::; do echo "--skip $M "; done) # io::error needs https://github.com/rust-lang/miri/pull/2465
+    # There are a bunch of modules we cannot handle yet:
+    # - f32, f64: use some unsupported float operations
+    # - fs, net, process, sys: need a lot of shims we don't support
+    # - io::error: needs https://github.com/rust-lang/miri/pull/2465
+    # - FIXME: sync::mutex: fails, but only on CI (?!?)
+    # - TODO: path, sys_common, time
+    # Additionally we skip some of the integration tests:
+    # - env_home_dir: needs a shim we don't support
+    # - sleep: needs https://github.com/rust-lang/miri/pull/2466
+    SKIP="f32:: f64:: fs:: net:: process:: sys:: io::error:: sync::mutex:: path:: sys::_common:: time:: env_home_dir sleep"
     # hashbrown does int2ptr casts, so we need permissive provenance.
-    echo && echo "## Testing std ($MODULES)" && echo
+    echo && echo "## Testing std (except for $SKIP)" && echo
     MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
-        -- $MODULES $SKIP \
+        -- $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
-    echo && echo "## Testing std docs ($MODULES)" && echo
+    echo && echo "## Testing std docs (except for $SKIP)" && echo
     MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
-        -- $MODULES $SKIP \
+        -- $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
     ;;
 simd)
