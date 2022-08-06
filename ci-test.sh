@@ -11,6 +11,7 @@ export MIRI_LIB_SRC=$(pwd)/rust-src-patched/library
 case "$1" in
 core)
     # A 64bit little-endian and a 32bit big-endian target.
+    # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo && echo "## Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)" && echo
         MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
@@ -29,14 +30,18 @@ core)
     done
     ;;
 alloc)
-    echo && echo "## Testing alloc (symbolic alignment, strict provenance)" && echo
-    MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
-        ./run-test.sh alloc --lib --tests \
-        2>&1 | ts -i '%.s  '
-    echo && echo "## Testing alloc docs (strict provenance)" && echo
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
-        ./run-test.sh alloc --doc \
-        2>&1 | ts -i '%.s  '
+    # A 64bit little-endian and a 32bit big-endian target.
+    # (Varying the OS is not really worth it for alloc.)
+    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
+        echo && echo "## Testing alloc ($TARGET, symbolic alignment, strict provenance)" && echo
+        MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
+            ./run-test.sh alloc --target $TARGET --lib --tests \
+            2>&1 | ts -i '%.s  '
+        echo && echo "## Testing alloc docs ($TARGET, strict provenance)" && echo
+        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
+            ./run-test.sh alloc --target $TARGET --doc \
+            2>&1 | ts -i '%.s  '
+    done
     ;;
 std)
     # There are a bunch of modules we cannot handle yet:
