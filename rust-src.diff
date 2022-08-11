@@ -115,32 +115,6 @@ index 7ebc41588b3..cb3032719fa 100644
  #[cfg_attr(target_os = "android", ignore)] // Android used in CI has a broken dlmalloc
  fn test_try_reserve() {
      let mut empty_bytes: HashMap<u8, u8> = HashMap::new();
-diff --git a/library/std/src/io/buffered/tests.rs b/library/std/src/io/buffered/tests.rs
-index fe45b132638..1e8cc59a455 100644
---- a/library/std/src/io/buffered/tests.rs
-+++ b/library/std/src/io/buffered/tests.rs
-@@ -3,7 +3,7 @@
- use crate::mem::MaybeUninit;
- use crate::panic;
- use crate::sync::atomic::{AtomicUsize, Ordering};
--use crate::thread;
-+use realstd::thread; // Miri needs the version in real `std`
- 
- /// A dummy reader intended at testing short-reads propagation.
- pub struct ShortReader {
-diff --git a/library/std/src/io/stdio/tests.rs b/library/std/src/io/stdio/tests.rs
-index f89fd27ce6c..10a117c3dfa 100644
---- a/library/std/src/io/stdio/tests.rs
-+++ b/library/std/src/io/stdio/tests.rs
-@@ -1,7 +1,7 @@
- use super::*;
- use crate::panic::{RefUnwindSafe, UnwindSafe};
- use crate::sync::mpsc::sync_channel;
--use crate::thread;
-+use realstd::thread;
- 
- #[test]
- fn stdout_unwind_safe() {
 diff --git a/library/std/src/io/tests.rs b/library/std/src/io/tests.rs
 index f357f33ec52..68a19eccc0e 100644
 --- a/library/std/src/io/tests.rs
@@ -225,58 +199,10 @@ index 351cf698810..dd307022c6d 100644
  fn bench_path_hashset_miss(b: &mut test::Bencher) {
      let prefix = "/my/home/is/my/castle/and/my/castle/has/a/rusty/workbench/";
      let paths: Vec<_> =
-diff --git a/library/std/src/sync/barrier/tests.rs b/library/std/src/sync/barrier/tests.rs
-index 834a3e75158..4af0f626de0 100644
---- a/library/std/src/sync/barrier/tests.rs
-+++ b/library/std/src/sync/barrier/tests.rs
-@@ -1,6 +1,6 @@
- use crate::sync::mpsc::{channel, TryRecvError};
- use crate::sync::{Arc, Barrier};
--use crate::thread;
-+use realstd::thread;
- 
- #[test]
- #[cfg_attr(target_os = "emscripten", ignore)]
-diff --git a/library/std/src/sync/condvar/tests.rs b/library/std/src/sync/condvar/tests.rs
-index 24f467f0b03..f70c4f96240 100644
---- a/library/std/src/sync/condvar/tests.rs
-+++ b/library/std/src/sync/condvar/tests.rs
-@@ -1,7 +1,7 @@
- use crate::sync::atomic::{AtomicBool, Ordering};
- use crate::sync::mpsc::channel;
- use crate::sync::{Arc, Condvar, Mutex};
--use crate::thread;
-+use realstd::thread;
- use crate::time::Duration;
- 
- #[test]
-diff --git a/library/std/src/sync/lazy_lock/tests.rs b/library/std/src/sync/lazy_lock/tests.rs
-index f11b66bfca5..a8c5ed684dd 100644
---- a/library/std/src/sync/lazy_lock/tests.rs
-+++ b/library/std/src/sync/lazy_lock/tests.rs
-@@ -6,8 +6,8 @@
-         Mutex,
-     },
-     sync::{LazyLock, OnceLock},
--    thread,
- };
-+use realstd::thread;
- 
- fn spawn_and_wait<R: Send + 'static>(f: impl FnOnce() -> R + Send + 'static) -> R {
-     thread::spawn(f).join().unwrap()
 diff --git a/library/std/src/sync/mpsc/mpsc_queue/tests.rs b/library/std/src/sync/mpsc/mpsc_queue/tests.rs
-index 9f4f31ed051..1095d656c47 100644
+index 9f4f31ed051..34b2a9a98ac 100644
 --- a/library/std/src/sync/mpsc/mpsc_queue/tests.rs
 +++ b/library/std/src/sync/mpsc/mpsc_queue/tests.rs
-@@ -1,7 +1,7 @@
- use super::{Data, Empty, Inconsistent, Queue};
- use crate::sync::mpsc::channel;
- use crate::sync::Arc;
--use crate::thread;
-+use realstd::thread; // Miri needs the version in real `std`
- 
- #[test]
- fn test_full() {
 @@ -13,7 +13,7 @@ fn test_full() {
  #[test]
  fn test() {
@@ -287,18 +213,9 @@ index 9f4f31ed051..1095d656c47 100644
      match q.pop() {
          Empty => {}
 diff --git a/library/std/src/sync/mpsc/spsc_queue/tests.rs b/library/std/src/sync/mpsc/spsc_queue/tests.rs
-index 467ef3dbdcb..7d0146b74cb 100644
+index 467ef3dbdcb..eb6d5c2cf66 100644
 --- a/library/std/src/sync/mpsc/spsc_queue/tests.rs
 +++ b/library/std/src/sync/mpsc/spsc_queue/tests.rs
-@@ -1,7 +1,7 @@
- use super::Queue;
- use crate::sync::mpsc::channel;
- use crate::sync::Arc;
--use crate::thread;
-+use realstd::thread; // Miri needs the version in real `std`
- 
- #[test]
- fn smoke() {
 @@ -77,12 +77,13 @@ fn stress() {
      }
  
@@ -324,18 +241,9 @@ index 467ef3dbdcb..7d0146b74cb 100644
          }
          rx.recv().unwrap();
 diff --git a/library/std/src/sync/mpsc/sync_tests.rs b/library/std/src/sync/mpsc/sync_tests.rs
-index e58649bab6e..49ccb60a5c6 100644
+index e58649bab6e..63c79436974 100644
 --- a/library/std/src/sync/mpsc/sync_tests.rs
 +++ b/library/std/src/sync/mpsc/sync_tests.rs
-@@ -1,7 +1,7 @@
- use super::*;
- use crate::env;
--use crate::thread;
- use crate::time::Duration;
-+use realstd::thread; // Miri needs the version in real `std`
- 
- pub fn stress_factor() -> usize {
-     match env::var("RUST_TEST_STRESS") {
 @@ -113,23 +113,25 @@ fn chan_gone_concurrent() {
  
  #[test]
@@ -407,18 +315,9 @@ index e58649bab6e..49ccb60a5c6 100644
      }
  }
 diff --git a/library/std/src/sync/mpsc/tests.rs b/library/std/src/sync/mpsc/tests.rs
-index 4deb3e59615..699f14512cb 100644
+index 4deb3e59615..f6d0796f604 100644
 --- a/library/std/src/sync/mpsc/tests.rs
 +++ b/library/std/src/sync/mpsc/tests.rs
-@@ -1,7 +1,7 @@
- use super::*;
- use crate::env;
--use crate::thread;
- use crate::time::{Duration, Instant};
-+use realstd::thread; // Miri needs the version in real `std`
- 
- pub fn stress_factor() -> usize {
-     match env::var("RUST_TEST_STRESS") {
 @@ -120,13 +120,14 @@ fn chan_gone_concurrent() {
  
  #[test]
@@ -461,59 +360,10 @@ index 4deb3e59615..699f14512cb 100644
          rx.recv().unwrap();
      }
  }
-diff --git a/library/std/src/sync/mutex/tests.rs b/library/std/src/sync/mutex/tests.rs
-index 93900566f11..e5cb77707c5 100644
---- a/library/std/src/sync/mutex/tests.rs
-+++ b/library/std/src/sync/mutex/tests.rs
-@@ -1,7 +1,7 @@
- use crate::sync::atomic::{AtomicUsize, Ordering};
- use crate::sync::mpsc::channel;
- use crate::sync::{Arc, Condvar, Mutex};
--use crate::thread;
-+use realstd::thread;
- 
- struct Packet<T>(Arc<(Mutex<T>, Condvar)>);
- 
-diff --git a/library/std/src/sync/once/tests.rs b/library/std/src/sync/once/tests.rs
-index 0c35597e11c..63e20f102f0 100644
---- a/library/std/src/sync/once/tests.rs
-+++ b/library/std/src/sync/once/tests.rs
-@@ -1,7 +1,7 @@
- use super::Once;
- use crate::panic;
- use crate::sync::mpsc::channel;
--use crate::thread;
-+use realstd::thread;
- 
- #[test]
- fn smoke_once() {
-diff --git a/library/std/src/sync/once_lock/tests.rs b/library/std/src/sync/once_lock/tests.rs
-index 46695225b9f..d96ac1f005a 100644
---- a/library/std/src/sync/once_lock/tests.rs
-+++ b/library/std/src/sync/once_lock/tests.rs
-@@ -5,8 +5,8 @@
-         atomic::{AtomicUsize, Ordering::SeqCst},
-         mpsc::channel,
-     },
--    thread,
- };
-+use realstd::thread;
- 
- fn spawn_and_wait<R: Send + 'static>(f: impl FnOnce() -> R + Send + 'static) -> R {
-     thread::spawn(f).join().unwrap()
 diff --git a/library/std/src/sync/rwlock/tests.rs b/library/std/src/sync/rwlock/tests.rs
-index 08255c985f5..2d855a6027b 100644
+index 08255c985f5..b5b3ad9898e 100644
 --- a/library/std/src/sync/rwlock/tests.rs
 +++ b/library/std/src/sync/rwlock/tests.rs
-@@ -1,7 +1,7 @@
- use crate::sync::atomic::{AtomicUsize, Ordering};
- use crate::sync::mpsc::channel;
- use crate::sync::{Arc, RwLock, RwLockReadGuard, TryLockError};
--use crate::thread;
-+use realstd::thread;
- use rand::{self, Rng};
- 
- #[derive(Eq, PartialEq, Debug)]
 @@ -19,7 +19,7 @@ fn smoke() {
  #[test]
  fn frob() {
@@ -523,78 +373,31 @@ index 08255c985f5..2d855a6027b 100644
  
      let r = Arc::new(RwLock::new(()));
  
-diff --git a/library/std/src/sys_common/remutex/tests.rs b/library/std/src/sys_common/remutex/tests.rs
-index 64873b850d3..489bd91fec0 100644
---- a/library/std/src/sys_common/remutex/tests.rs
-+++ b/library/std/src/sys_common/remutex/tests.rs
-@@ -3,7 +3,7 @@
- use crate::pin::Pin;
- use crate::sync::Arc;
- use crate::sys_common::remutex::{ReentrantMutex, ReentrantMutexGuard};
--use crate::thread;
-+use realstd::thread;
- 
- #[test]
- fn smoke() {
-diff --git a/library/std/src/thread/local/tests.rs b/library/std/src/thread/local/tests.rs
-index 1df1ca758c0..51d77514193 100644
---- a/library/std/src/thread/local/tests.rs
-+++ b/library/std/src/thread/local/tests.rs
-@@ -1,8 +1,9 @@
- use crate::cell::{Cell, UnsafeCell};
- use crate::sync::atomic::{AtomicU8, Ordering};
- use crate::sync::mpsc::{channel, Sender};
--use crate::thread::{self, LocalKey};
-+use crate::thread::LocalKey;
- use crate::thread_local;
-+use realstd::thread; // Miri needs the version in real `std`
- 
- struct Foo(Sender<()>);
- 
-diff --git a/library/std/src/thread/mod.rs b/library/std/src/thread/mod.rs
-index 44c8a50fd86..c88760942f0 100644
---- a/library/std/src/thread/mod.rs
-+++ b/library/std/src/thread/mod.rs
-@@ -204,8 +204,18 @@
- 
- #[unstable(feature = "libstd_thread_internals", issue = "none")]
- #[cfg(target_thread_local)]
-+#[cfg(not(test))]
- #[doc(hidden)]
- pub use self::local::fast::Key as __FastLocalKeyInner;
-+#[unstable(feature = "libstd_thread_internals", issue = "none")]
-+#[cfg(target_thread_local)]
-+#[cfg(test)] // when building for tests, use real std's key
-+pub use realstd::thread::__FastLocalKeyInner;
-+#[unstable(feature = "libstd_thread_internals", issue = "none")]
-+#[cfg(target_thread_local)]
-+#[cfg(test)]
-+pub use self::local::fast::Key as __FastLocalKeyInnerUnused; // we import this anyway to silence 'unused' warnings
-+
- #[unstable(feature = "libstd_thread_internals", issue = "none")]
- #[doc(hidden)]
- pub use self::local::os::Key as __OsLocalKeyInner;
+diff --git a/library/std/src/sys/unix/fs.rs b/library/std/src/sys/unix/fs.rs
+index b5cc8038ca4..1261ed0cd89 100644
+--- a/library/std/src/sys/unix/fs.rs
++++ b/library/std/src/sys/unix/fs.rs
+@@ -825,6 +825,7 @@ fn name_bytes(&self) -> &[u8] {
+         target_os = "fuchsia",
+         target_os = "redox"
+     )))]
++    #[cfg_attr(miri, allow(unused))]
+     fn name_cstr(&self) -> &CStr {
+         unsafe { CStr::from_ptr(self.entry.d_name.as_ptr()) }
+     }
+@@ -836,6 +837,7 @@ fn name_cstr(&self) -> &CStr {
+         target_os = "fuchsia",
+         target_os = "redox"
+     ))]
++    #[cfg_attr(miri, allow(unused))]
+     fn name_cstr(&self) -> &CStr {
+         &self.name
+     }
 diff --git a/library/std/src/thread/tests.rs b/library/std/src/thread/tests.rs
-index ec68b529188..c36fdb38e36 100644
+index ec68b529188..130e47c8d44 100644
 --- a/library/std/src/thread/tests.rs
 +++ b/library/std/src/thread/tests.rs
-@@ -1,4 +1,3 @@
--use super::Builder;
- use crate::any::Any;
- use crate::mem;
- use crate::panic::panic_any;
-@@ -8,9 +7,9 @@
-     mpsc::{channel, Sender},
-     Arc, Barrier,
- };
--use crate::thread::{self, Scope, ThreadId};
- use crate::time::Duration;
- use crate::time::Instant;
-+use realstd::thread::{self, Builder, Scope, ThreadId}; // Miri needs the version in real `std`
- 
- // !!! These tests are dangerous. If something is buggy, they will hang, !!!
- // !!! instead of exiting cleanly. This might wedge the buildbots.       !!!
-@@ -329,3 +328,22 @@ fn foo(x: &u8) {
+@@ -329,3 +329,22 @@ fn foo(x: &u8) {
      let x = 42_u8;
      foo(&x);
  }
@@ -618,15 +421,12 @@ index ec68b529188..c36fdb38e36 100644
 +    }
 +}
 diff --git a/library/std/src/time/tests.rs b/library/std/src/time/tests.rs
-index d710a574465..aac077d2513 100644
+index d710a574465..6229556c85f 100644
 --- a/library/std/src/time/tests.rs
 +++ b/library/std/src/time/tests.rs
-@@ -29,9 +29,10 @@ fn instant_monotonic() {
- fn instant_monotonic_concurrent() -> crate::thread::Result<()> {
-     let threads: Vec<_> = (0..8)
+@@ -31,7 +31,8 @@ fn instant_monotonic_concurrent() -> crate::thread::Result<()> {
          .map(|_| {
--            crate::thread::spawn(|| {
-+            realstd::thread::spawn(|| {
+             crate::thread::spawn(|| {
                  let mut old = Instant::now();
 -                for _ in 0..5_000_000 {
 +                let count = if cfg!(miri) { 1_000 } else { 5_000_000 };
@@ -634,12 +434,3 @@ index d710a574465..aac077d2513 100644
                      let new = Instant::now();
                      assert!(new >= old);
                      old = new;
-@@ -205,7 +206,7 @@ fn $bench_name(b: &mut Bencher) -> crate::thread::Result<()> {
-             let threads: Vec<_> = (0..$thread_count)
-                 .map(|_| {
-                     let flag = Arc::clone(&running);
--                    crate::thread::spawn(move || {
-+                    realstd::thread::spawn(move || {
-                         while flag.load(Ordering::Relaxed) {
-                             black_box(Instant::now());
-                         }
