@@ -393,6 +393,29 @@ index b5cc8038ca4..1261ed0cd89 100644
      fn name_cstr(&self) -> &CStr {
          &self.name
      }
+diff --git a/library/std/src/thread/mod.rs b/library/std/src/thread/mod.rs
+index 44c8a50fd86..c88760942f0 100644
+--- a/library/std/src/thread/mod.rs
++++ b/library/std/src/thread/mod.rs
+@@ -204,8 +204,18 @@
+ 
+ #[unstable(feature = "libstd_thread_internals", issue = "none")]
+ #[cfg(target_thread_local)]
++#[cfg(not(test))]
+ #[doc(hidden)]
+ pub use self::local::fast::Key as __FastLocalKeyInner;
++#[unstable(feature = "libstd_thread_internals", issue = "none")]
++#[cfg(target_thread_local)]
++#[cfg(test)] // when building for tests, use real std's key
++pub use realstd::thread::__FastLocalKeyInner;
++#[unstable(feature = "libstd_thread_internals", issue = "none")]
++#[cfg(target_thread_local)]
++#[cfg(test)]
++pub use self::local::fast::Key as __FastLocalKeyInnerUnused; // we import this anyway to silence 'unused' warnings
++
+ #[unstable(feature = "libstd_thread_internals", issue = "none")]
+ #[doc(hidden)]
+ pub use self::local::os::Key as __OsLocalKeyInner;
 diff --git a/library/std/src/thread/tests.rs b/library/std/src/thread/tests.rs
 index ec68b529188..130e47c8d44 100644
 --- a/library/std/src/thread/tests.rs
