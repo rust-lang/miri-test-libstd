@@ -49,17 +49,11 @@ alloc)
     done
     ;;
 std)
-    # Core modules, that we are testing on a bunch of targets. These are the most OS-specific.
-    # TODO: add env:: here once https://github.com/rust-lang/miri/pull/2470l propagates.
-    CORE="time:: sync:: thread::"
-    # Modules that we skip entirely, because they need a lot of thims we don't support.
-    # TODO: remove most of these once some PRs propagate.
-    # - f32, f64: needs https://github.com/rust-lang/miri/pull/2469
-    # - io::error: needs https://github.com/rust-lang/miri/pull/2465
-    # Additionally we skip some of the integration tests:
-    # - env_home_dir: needs https://github.com/rust-lang/miri/pull/2467
-    # - sleep: needs https://github.com/rust-lang/miri/pull/2466
-    SKIP="fs:: net:: process:: sys:: sys_common::net:: f32:: f64:: io::error:: env_home_dir sleep"
+    # Modules that we skip entirely, because they need a lot of shims we don't support.
+    SKIP="fs:: net:: process:: sys:: sys_common::net::"
+    # Core modules, that we are testing on a bunch of targets.
+    # These are the most OS-specific (among the modules we do not skip).
+    CORE="time:: sync:: thread:: env::"
 
     # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
