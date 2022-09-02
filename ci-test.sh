@@ -19,14 +19,14 @@ core)
             -- --skip align \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing core ($TARGET, strict provenance)"
-        MIRIFLAGS="-Zmiri-strict-provenance" \
+        echo "::group::Testing core ($TARGET, strict provenance, field retagging)"
+        MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
             ./run-test.sh core --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
-        echo "::group::Testing core docs ($TARGET)" && echo
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+        echo "::group::Testing core docs ($TARGET, field retagging)" && echo
+        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-retag-fields" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
