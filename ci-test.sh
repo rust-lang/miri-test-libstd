@@ -57,28 +57,28 @@ std)
 
     # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
-        echo "::group::Testing std core ($CORE on $TARGET)"
-        MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        echo "::group::Testing std core ($CORE on $TARGET, field retagging)"
+        MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
             ./run-test.sh std --target $TARGET --lib --tests \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET)"
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        echo "::group::Testing std core docs ($CORE on $TARGET, field retagging)"
+        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
             ./run-test.sh std --target $TARGET --doc \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
     # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (except for $SKIP)"
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+    echo "::group::Testing remaining std (except for $SKIP, field retagging)"
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
         ./run-test.sh std --lib --tests \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing remaining std docs (except for $SKIP)"
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+    echo "::group::Testing remaining std docs (except for $SKIP, field retagging)"
+    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
         ./run-test.sh std --doc \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
@@ -86,13 +86,13 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
-    echo "::group::Testing portable-simd (strict provenance)"
-    MIRIFLAGS="-Zmiri-strict-provenance" \
+    echo "::group::Testing portable-simd (strict provenance, field retagging)"
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
         cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing portable-simd docs (strict provenance)"
-    MIRIFLAGS="-Zmiri-strict-provenance" \
+    echo "::group::Testing portable-simd docs (strict provenance, field retagging)"
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
         cargo miri test --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
