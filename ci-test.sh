@@ -86,13 +86,13 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
-    echo "::group::Testing portable-simd (strict provenance)"
-    MIRIFLAGS="-Zmiri-strict-provenance" \
+    echo "::group::Testing portable-simd (strict provenance, field retagging)"
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
         cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing portable-simd docs (strict provenance)"
-    MIRIFLAGS="-Zmiri-strict-provenance" \
+    echo "::group::Testing portable-simd docs (strict provenance, field retagging)"
+    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
         cargo miri test --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
