@@ -36,13 +36,13 @@ alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing alloc ($TARGET, symbolic alignment, strict provenance)"
-        MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
+        echo "::group::Testing alloc ($TARGET, symbolic alignment, strict provenance, field retagging)"
+        MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance -Zmiri-retag-fields" \
             ./run-test.sh alloc --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing alloc docs ($TARGET, strict provenance)"
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
+        echo "::group::Testing alloc docs ($TARGET, strict provenance, field retagging)"
+        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance -Zmiri-retag-fields" \
             ./run-test.sh alloc --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
