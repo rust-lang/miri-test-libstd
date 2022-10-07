@@ -24,3 +24,5 @@ path = "../library/core/tests/lib.rs"
 
 [dev-dependencies]
 rand = "0.7"
+# This lets tests access the `core` crate.
+core = { path = "../fake/core" }
