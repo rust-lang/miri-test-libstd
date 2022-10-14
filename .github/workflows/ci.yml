@@ -97,7 +97,7 @@ jobs:
           ZULIP_API_TOKEN: ${{ secrets.ZULIP_API_TOKEN }}
         run: |
           ~/.local/bin/zulip-send --stream miri --subject "Cron Job Failure (miri-test-libstd, $(date -u +%Y-%m))" \
-            --message 'Dear @**RalfJ**,
+            --message 'Dear @*T-miri*,
 
           The standard library test suite is failing under Miri. Would you mind investigating this issue?
 
