@@ -23,7 +23,7 @@ index aadb0dc9c40..64bce0ff8c0 100644
      assert_eq!(core::mem::size_of::<LeafNode<(), ()>>(), 16);
      assert_eq!(core::mem::size_of::<LeafNode<i64, i64>>(), 16 + CAPACITY * 2 * 8);
 diff --git a/library/alloc/src/collections/vec_deque/tests.rs b/library/alloc/src/collections/vec_deque/tests.rs
-index 1f2daef213c..ebd5bc72fc7 100644
+index 1f2daef213c..a103531a20f 100644
 --- a/library/alloc/src/collections/vec_deque/tests.rs
 +++ b/library/alloc/src/collections/vec_deque/tests.rs
 @@ -3,7 +3,6 @@
@@ -42,43 +42,79 @@ index 1f2daef213c..ebd5bc72fc7 100644
  fn bench_push_front_100(b: &mut test::Bencher) {
      let mut deq = VecDeque::with_capacity(101);
      b.iter(|| {
-@@ -29,7 +27,6 @@ fn bench_push_front_100(b: &mut test::Bencher) {
+@@ -29,12 +27,15 @@ fn bench_push_front_100(b: &mut test::Bencher) {
  }
  
  #[bench]
 -#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
  fn bench_pop_back_100(b: &mut test::Bencher) {
-     let mut deq = VecDeque::<i32>::with_capacity(101);
+-    let mut deq = VecDeque::<i32>::with_capacity(101);
++    let size = 100;
++    let mut deq = VecDeque::<i32>::with_capacity(size+1);
++    // We'll mess with private state to pretend like `deq` is filled.
++    // Make sure the buffer is initialized so that we don't read uninit memory.
++    unsafe { deq.ptr().write_bytes(0u8, size+1) };
  
-@@ -43,7 +40,6 @@ fn bench_pop_back_100(b: &mut test::Bencher) {
+     b.iter(|| {
+-        deq.head = 100;
++        deq.head = size;
+         deq.tail = 0;
+         while !deq.is_empty() {
+             test::black_box(deq.pop_back());
+@@ -43,9 +44,9 @@ fn bench_pop_back_100(b: &mut test::Bencher) {
  }
  
  #[bench]
 -#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
  fn bench_retain_whole_10000(b: &mut test::Bencher) {
-     let v = (1..100000).collect::<VecDeque<u32>>();
+-    let v = (1..100000).collect::<VecDeque<u32>>();
++    let size = if cfg!(miri) { 1000 } else { 100000 };
++    let v = (1..size).collect::<VecDeque<u32>>();
  
-@@ -54,7 +50,6 @@ fn bench_retain_whole_10000(b: &mut test::Bencher) {
+     b.iter(|| {
+         let mut v = v.clone();
+@@ -54,9 +55,9 @@ fn bench_retain_whole_10000(b: &mut test::Bencher) {
  }
  
  #[bench]
 -#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
  fn bench_retain_odd_10000(b: &mut test::Bencher) {
-     let v = (1..100000).collect::<VecDeque<u32>>();
+-    let v = (1..100000).collect::<VecDeque<u32>>();
++    let size = if cfg!(miri) { 1000 } else { 100000 };
++    let v = (1..size).collect::<VecDeque<u32>>();
  
-@@ -65,7 +60,6 @@ fn bench_retain_odd_10000(b: &mut test::Bencher) {
+     b.iter(|| {
+         let mut v = v.clone();
+@@ -65,23 +66,26 @@ fn bench_retain_odd_10000(b: &mut test::Bencher) {
  }
  
  #[bench]
 -#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
  fn bench_retain_half_10000(b: &mut test::Bencher) {
-     let v = (1..100000).collect::<VecDeque<u32>>();
+-    let v = (1..100000).collect::<VecDeque<u32>>();
++    let size = if cfg!(miri) { 1000 } else { 100000 };
++    let v = (1..size).collect::<VecDeque<u32>>();
  
-@@ -76,7 +70,6 @@ fn bench_retain_half_10000(b: &mut test::Bencher) {
+     b.iter(|| {
+         let mut v = v.clone();
+-        v.retain(|x| *x > 50000)
++        v.retain(|x| *x > size/2)
+     })
  }
  
  #[bench]
 -#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
  fn bench_pop_front_100(b: &mut test::Bencher) {
-     let mut deq = VecDeque::<i32>::with_capacity(101);
+-    let mut deq = VecDeque::<i32>::with_capacity(101);
++    let size = 100;
++    let mut deq = VecDeque::<i32>::with_capacity(size+1);
++    // We'll mess with private state to pretend like `deq` is filled.
++    // Make sure the buffer is initialized so that we don't read uninit memory.
++    unsafe { deq.ptr().write_bytes(0u8, size+1) };
  
+     b.iter(|| {
+-        deq.head = 100;
++        deq.head = size;
+         deq.tail = 0;
+         while !deq.is_empty() {
+             test::black_box(deq.pop_front());
