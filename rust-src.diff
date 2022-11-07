@@ -1,3 +1,15 @@
+diff --git a/library/alloc/src/alloc/tests.rs b/library/alloc/src/alloc/tests.rs
+index b2f0194599b..1a5938fd34c 100644
+--- a/library/alloc/src/alloc/tests.rs
++++ b/library/alloc/src/alloc/tests.rs
+@@ -22,7 +22,6 @@ fn allocate_zeroed() {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn alloc_owned_small(b: &mut Bencher) {
+     b.iter(|| {
+         let _: Box<_> = Box::new(10);
 diff --git a/library/alloc/src/collections/btree/node/tests.rs b/library/alloc/src/collections/btree/node/tests.rs
 index aadb0dc9c40..64bce0ff8c0 100644
 --- a/library/alloc/src/collections/btree/node/tests.rs
@@ -10,3 +22,63 @@ index aadb0dc9c40..64bce0ff8c0 100644
  fn test_sizes() {
      assert_eq!(core::mem::size_of::<LeafNode<(), ()>>(), 16);
      assert_eq!(core::mem::size_of::<LeafNode<i64, i64>>(), 16 + CAPACITY * 2 * 8);
+diff --git a/library/alloc/src/collections/vec_deque/tests.rs b/library/alloc/src/collections/vec_deque/tests.rs
+index 1f2daef213c..ebd5bc72fc7 100644
+--- a/library/alloc/src/collections/vec_deque/tests.rs
++++ b/library/alloc/src/collections/vec_deque/tests.rs
+@@ -3,7 +3,6 @@
+ use super::*;
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_push_back_100(b: &mut test::Bencher) {
+     let mut deq = VecDeque::with_capacity(101);
+     b.iter(|| {
+@@ -16,7 +15,6 @@ fn bench_push_back_100(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_push_front_100(b: &mut test::Bencher) {
+     let mut deq = VecDeque::with_capacity(101);
+     b.iter(|| {
+@@ -29,7 +27,6 @@ fn bench_push_front_100(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_pop_back_100(b: &mut test::Bencher) {
+     let mut deq = VecDeque::<i32>::with_capacity(101);
+ 
+@@ -43,7 +40,6 @@ fn bench_pop_back_100(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_retain_whole_10000(b: &mut test::Bencher) {
+     let v = (1..100000).collect::<VecDeque<u32>>();
+ 
+@@ -54,7 +50,6 @@ fn bench_retain_whole_10000(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_retain_odd_10000(b: &mut test::Bencher) {
+     let v = (1..100000).collect::<VecDeque<u32>>();
+ 
+@@ -65,7 +60,6 @@ fn bench_retain_odd_10000(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_retain_half_10000(b: &mut test::Bencher) {
+     let v = (1..100000).collect::<VecDeque<u32>>();
+ 
+@@ -76,7 +70,6 @@ fn bench_retain_half_10000(b: &mut test::Bencher) {
+ }
+ 
+ #[bench]
+-#[cfg_attr(miri, ignore)] // isolated Miri does not support benchmarks
+ fn bench_pop_front_100(b: &mut test::Bencher) {
+     let mut deq = VecDeque::<i32>::with_capacity(101);
+ 
