@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+DEFAULTFLAGS="-Zmiri-retag-fields"
+
 # apply our patch
 rm -rf rust-src-patched
 cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
@@ -14,19 +16,19 @@ core)
     # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
-        MIRIFLAGS="-Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
             ./run-test.sh core --target $TARGET --lib --tests \
             -- --skip align \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing core ($TARGET, strict provenance, field retagging)"
-        MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
+        echo "::group::Testing core ($TARGET, strict provenance)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-strict-provenance" \
             ./run-test.sh core --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
-        echo "::group::Testing core docs ($TARGET, field retagging)" && echo
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-retag-fields" \
+        echo "::group::Testing core docs ($TARGET)" && echo
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
@@ -36,13 +38,13 @@ alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing alloc ($TARGET, symbolic alignment, strict provenance, field retagging)"
-        MIRIFLAGS="-Zmiri-symbolic-alignment-check -Zmiri-strict-provenance -Zmiri-retag-fields" \
+        echo "::group::Testing alloc ($TARGET, symbolic alignment, strict provenance)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check -Zmiri-strict-provenance" \
             ./run-test.sh alloc --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing alloc docs ($TARGET, strict provenance, field retagging)"
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance -Zmiri-retag-fields" \
+        echo "::group::Testing alloc docs ($TARGET, strict provenance)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
             ./run-test.sh alloc --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
@@ -57,28 +59,28 @@ std)
 
     # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
-        echo "::group::Testing std core ($CORE on $TARGET, field retagging)"
-        MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
+        echo "::group::Testing std core ($CORE on $TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
             ./run-test.sh std --target $TARGET --lib --tests \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET, field retagging)"
-        MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
+        echo "::group::Testing std core docs ($CORE on $TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
             ./run-test.sh std --target $TARGET --doc \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
     # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (except for $SKIP, field retagging)"
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
+    echo "::group::Testing remaining std (except for $SKIP)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --lib --tests \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing remaining std docs (except for $SKIP, field retagging)"
-    MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance -Zmiri-retag-fields" \
+    echo "::group::Testing remaining std docs (except for $SKIP)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
         ./run-test.sh std --doc \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
@@ -86,13 +88,13 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
-    echo "::group::Testing portable-simd (strict provenance, field retagging)"
-    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
+    echo "::group::Testing portable-simd (strict provenance)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-strict-provenance" \
         cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing portable-simd docs (strict provenance, field retagging)"
-    MIRIFLAGS="-Zmiri-strict-provenance -Zmiri-retag-fields" \
+    echo "::group::Testing portable-simd docs (strict provenance)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-strict-provenance" \
         cargo miri test --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
