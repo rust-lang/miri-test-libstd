@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-DEFAULTFLAGS="-Zmiri-retag-fields -Zrandomize-layout"
+DEFAULTFLAGS="-Zmiri-retag-fields"
 
 # apply our patch
 rm -rf rust-src-patched
