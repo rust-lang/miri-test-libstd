@@ -1,9 +1,5 @@
-commit d371c6cf51c77e199ac391f3f47ff6080ea3e943
-Author: Ralf Jung <post@ralfj.de>
-Date:   Mon Nov 21 10:07:02 2022 +0100
-
-    bump rand dependency of alloc and core tests
-
+diff --git a/library/alloc/Cargo.toml b/library/alloc/Cargo.toml
+index 265020209eb..86e12f323d8 100644
 --- a/library/alloc/Cargo.toml
 +++ b/library/alloc/Cargo.toml
 @@ -13,8 +13,8 @@ core = { path = "../core" }
@@ -93,3 +89,55 @@ index 3c01e2998cd..bb61224b5ba 100644
                      if x != 0 { x } else { 1 }
                  })
                  .collect();
+diff --git a/library/std/Cargo.toml b/library/std/Cargo.toml
+index c10bfde4ddf..e727d3d57af 100644
+--- a/library/std/Cargo.toml
++++ b/library/std/Cargo.toml
+@@ -33,7 +33,7 @@ default-features = false
+ features = ['read_core', 'elf', 'macho', 'pe', 'unaligned', 'archive']
+ 
+ [dev-dependencies]
+-rand = "0.7"
++rand = "0.8"
+ 
+ [target.'cfg(any(all(target_family = "wasm", not(target_os = "emscripten")), all(target_vendor = "fortanix", target_env = "sgx")))'.dependencies]
+ dlmalloc = { version = "0.2.3", features = ['rustc-dep-of-std'] }
+diff --git a/library/std/src/collections/hash/map/tests.rs b/library/std/src/collections/hash/map/tests.rs
+index 65634f2063f..d68eb31268b 100644
+--- a/library/std/src/collections/hash/map/tests.rs
++++ b/library/std/src/collections/hash/map/tests.rs
+@@ -714,12 +714,12 @@ fn check(m: &HashMap<i32, ()>) {
+ 
+     // Populate the map with some items.
+     for _ in 0..50 {
+-        let x = rng.gen_range(-10, 10);
++        let x = rng.gen_range(-10..10);
+         m.insert(x, ());
+     }
+ 
+     for _ in 0..1000 {
+-        let x = rng.gen_range(-10, 10);
++        let x = rng.gen_range(-10..10);
+         match m.entry(x) {
+             Vacant(_) => {}
+             Occupied(e) => {
+diff --git a/library/std/tests/env.rs b/library/std/tests/env.rs
+index b095c2dde62..c6667712c86 100644
+--- a/library/std/tests/env.rs
++++ b/library/std/tests/env.rs
+@@ -1,12 +1,11 @@
+ use std::env::*;
+ use std::ffi::{OsStr, OsString};
+ 
+-use rand::distributions::Alphanumeric;
+-use rand::{thread_rng, Rng};
++use rand::distributions::{Alphanumeric, DistString};
++use rand::thread_rng;
+ 
+ fn make_rand_name() -> OsString {
+-    let rng = thread_rng();
+-    let n = format!("TEST{}", rng.sample_iter(&Alphanumeric).take(10).collect::<String>());
++    let n = format!("TEST{}", Alphanumeric.sample_string(&mut thread_rng(), 10));
+     let n = OsString::from(n);
+     assert!(var_os(&n).is_none());
+     n
