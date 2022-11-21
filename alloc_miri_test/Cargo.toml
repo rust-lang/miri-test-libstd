@@ -16,8 +16,8 @@ default = ["miri-test-libstd"]
 miri-test-libstd = []
 
 [dev-dependencies]
-rand = "0.7"
-rand_xorshift = "0.2"
+rand = "0.8"
+rand_xorshift = "0.3"
 # This lets tests access the `core` and `alloc` crates.
 core = { path = "../fake/core" }
 alloc = { path = "../fake/alloc" }
