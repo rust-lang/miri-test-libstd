@@ -60,15 +60,17 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
+    # FIXME: strict provenance should be possible, but needs
+    # <https://github.com/rust-lang/rust/pull/104658> and a getrandom bump.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
-        echo "::group::Testing std core ($CORE on $TARGET, strict provenance)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-strict-provenance" \
+        echo "::group::Testing std core ($CORE on $TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --lib --tests \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET, strict provenance)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
+        echo "::group::Testing std core docs ($CORE on $TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
             -- $CORE \
             2>&1 | ts -i '%.s  '
