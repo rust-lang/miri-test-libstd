@@ -27,6 +27,9 @@ core)
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
+        # FIXME: Once <https://github.com/rust-lang/rust/pull/95583> lands, the only
+        # one that is left is `primitive_docs.rs - prim_fn`, which I am sure we
+        # can find some solution for.
         echo "::group::Testing core docs ($TARGET)" && echo
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh core --target $TARGET --doc \
@@ -57,21 +60,21 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
-    # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
-        echo "::group::Testing std core ($CORE on $TARGET)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        echo "::group::Testing std core ($CORE on $TARGET, strict provenance)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-strict-provenance" \
             ./run-test.sh std --target $TARGET --lib --tests \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+        echo "::group::Testing std core docs ($CORE on $TARGET, strict provenance)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
             ./run-test.sh std --target $TARGET --doc \
             -- $CORE \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
+    # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     # "sleep" has a thread leak that we have to ignore
     echo "::group::Testing remaining std (except for $SKIP)"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
