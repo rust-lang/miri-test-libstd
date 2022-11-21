@@ -23,7 +23,6 @@ name = "coretests"
 path = "../library/core/tests/lib.rs"
 
 [dev-dependencies]
-rand = "0.8"
-rand_xorshift = "0.3"
+rand = "0.7"
 # This lets tests access the `core` crate.
 core = { path = "../fake/core" }

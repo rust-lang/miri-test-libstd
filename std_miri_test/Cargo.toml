@@ -26,8 +26,7 @@ std_detect = { path = "../fake/std_detect" }
 rustc-demangle = { path = "../fake/rustc-demangle" }
 
 [dev-dependencies]
-rand = "0.8"
-rand_xorshift = "0.3"
+rand = "0.7"
 
 [features]
 # Empty this crate
