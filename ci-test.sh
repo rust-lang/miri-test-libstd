@@ -26,12 +26,8 @@ core)
             ./run-test.sh core --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        # Cannot use strict provenance as there are int-to-ptr casts in the doctests.
-        # FIXME: Once <https://github.com/rust-lang/rust/pull/95583> lands, the only
-        # one that is left is `primitive_docs.rs - prim_fn`, which I am sure we
-        # can find some solution for.
-        echo "::group::Testing core docs ($TARGET)" && echo
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+        echo "::group::Testing core docs ($TARGET, strict provenance)" && echo
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-strict-provenance" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
