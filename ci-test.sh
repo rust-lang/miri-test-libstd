@@ -56,7 +56,7 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
-    for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin; do
+    for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin x86_64-pc-windows-msvc i686-pc-windows-gnu; do
         echo "::group::Testing std core ($CORE on $TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --lib --tests \
