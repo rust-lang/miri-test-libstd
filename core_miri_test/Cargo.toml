@@ -22,7 +22,10 @@ miri-test-libstd = []
 name = "coretests"
 path = "../library/core/tests/lib.rs"
 
-[dev-dependencies]
-rand = "0.7"
-# This lets tests access the `core` crate.
+[dependencies]
+# This lets the crate access the `core` crate.
 core = { path = "../fake/core" }
+
+[dev-dependencies]
+rand = { version = "0.8.5", default-features = false }
+rand_xorshift = { version = "0.3.0", default-features = false }
