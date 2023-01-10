@@ -1,4 +1,4 @@
-This repository serves to run the libcore and liballoc unit test suites in [Miri](https://github.com/solson/miri/): we basically run `cargo miri test` against [coretests](https://github.com/rust-lang/rust/tree/master/src/libcore/tests), [alloctests](https://github.com/rust-lang/rust/tree/master/src/liballoc/tests) and [liballoc itself](https://github.com/rust-lang/rust/tree/master/src/liballoc) (there do not seem to be `#[test]` functions embedded in libcore).
+This repository serves to run the libcore and liballoc unit test suites in [Miri](https://github.com/rust-lang/miri/): we basically run `cargo miri test` against [coretests](https://github.com/rust-lang/rust/tree/master/library/core/tests), [alloctests](https://github.com/rust-lang/rust/tree/master/library/alloc/tests) and [liballoc itself](https://github.com/rust-lang/rust/tree/master/library/alloc) (there do not seem to be `#[test]` functions embedded in libcore).
 
 Every night, a Travis cron job runs the tests against the latest nightly, to make sure we notice when changes in Rust or Miri break a test.
 
