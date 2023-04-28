@@ -1,0 +1,71 @@
+diff --git a/library/std/src/sys/common/thread_local/mod.rs b/library/std/src/sys/common/thread_local/mod.rs
+index a7528c06c9d..17c085cc92c 100644
+--- a/library/std/src/sys/common/thread_local/mod.rs
++++ b/library/std/src/sys/common/thread_local/mod.rs
+@@ -1,5 +1,10 @@
+ #![unstable(feature = "thread_local_internals", reason = "should not be necessary", issue = "none")]
+ 
++// There are three thread-local implementations: "static", "fast", "OS".
++// The "OS" thread local key type is accessed via platform-specific API calls and is slow, while the
++// "fast" key type is accessed via code generated via LLVM, where TLS keys are set up by the linker.
++// "static" is for single-threaded platforms where a global static is sufficient.
++
+ cfg_if::cfg_if! {
+     if #[cfg(all(target_family = "wasm", not(target_feature = "atomics")))] {
+         #[doc(hidden)]
+diff --git a/library/std/src/sys/common/thread_local/os_local.rs b/library/std/src/sys/common/thread_local/os_local.rs
+index e9516f9983f..6b01f6e44d3 100644
+--- a/library/std/src/sys/common/thread_local/os_local.rs
++++ b/library/std/src/sys/common/thread_local/os_local.rs
+@@ -18,7 +18,7 @@ unsafe fn __getit(
+         ) -> $crate::option::Option<&'static $t> {
+             const INIT_EXPR: $t = $init;
+ 
+-                        // On platforms without `#[thread_local]` we fall back to the
++            // On platforms without `#[thread_local]` we fall back to the
+             // same implementation as below for os thread locals.
+             #[inline]
+             const fn __init() -> $t { INIT_EXPR }
+diff --git a/library/std/src/thread/mod.rs b/library/std/src/thread/mod.rs
+index 9cdc17a287c..166883ed512 100644
+--- a/library/std/src/thread/mod.rs
++++ b/library/std/src/thread/mod.rs
+@@ -193,22 +193,22 @@
+ #[macro_use]
+ mod local;
+ 
+-#[stable(feature = "rust1", since = "1.0.0")]
+-pub use self::local::{AccessError, LocalKey};
+-
+-// Provide the type used by the thread_local! macro to access TLS keys. This
+-// needs to be kept in sync with the macro itself (in `local.rs`).
+-// There are three types: "static", "fast", "OS". The "OS" thread local key
+-// type is accessed via platform-specific API calls and is slow, while the "fast"
+-// key type is accessed via code generated via LLVM, where TLS keys are set up
+-// by the elf linker. "static" is for single-threaded platforms where a global
+-// static is sufficient.
+-
+-// Implementation details used by the thread_local!{} macro.
+-#[doc(hidden)]
+-#[unstable(feature = "thread_local_internals", issue = "none")]
+-pub mod local_impl {
+-    pub use crate::sys::common::thread_local::{thread_local_inner, Key};
++cfg_if::cfg_if! {
++    if #[cfg(test)] {
++        // Avoid duplicating the global state assoictaed with thread-locals between this crate and
++        // realstd. Miri relies on this.
++        pub use realstd::thread::{local_impl, AccessError, LocalKey};
++    } else {
++        #[stable(feature = "rust1", since = "1.0.0")]
++        pub use self::local::{AccessError, LocalKey};
++
++        // Implementation details used by the thread_local!{} macro.
++        #[doc(hidden)]
++        #[unstable(feature = "thread_local_internals", issue = "none")]
++        pub mod local_impl {
++            pub use crate::sys::common::thread_local::{thread_local_inner, Key};
++        }
++    }
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////////////
