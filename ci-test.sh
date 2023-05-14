@@ -87,8 +87,9 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
+    # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
     echo "::group::Testing portable-simd"
-    MIRIFLAGS="$DEFAULTFLAGS" \
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-permissive-provenance" \
         cargo miri test --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
