@@ -70,16 +70,15 @@ std)
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
-    # hashbrown and some other things do int2ptr casts, so we need permissive provenance.
     # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (all except for $SKIP, ignore leaks, permissive provenance)"
-    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+    echo "::group::Testing remaining std (all except for $SKIP, ignore leaks)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
         ./run-test.sh std --lib --tests \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing remaining std docs (all except for $SKIP, ignore leaks, permissive provenance)"
-    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation -Zmiri-permissive-provenance" \
+    echo "::group::Testing remaining std docs (all except for $SKIP, ignore leaks)"
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
         ./run-test.sh std --doc \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
