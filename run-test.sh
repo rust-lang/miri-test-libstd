@@ -8,7 +8,7 @@ set -euo pipefail
 ##   ./run-test.sh CRATE_NAME CARGO_TEST_ARGS
 ## Environment variables:
 ##   MIRI_LIB_SRC: The path to the Rust library directory (`library`).
-##     Defaults to `$(miri --print sysroot)/lib/rustlib/src/rust/library`.
+##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust/library`.
 
 CRATE=${1:-}
 if [[ -z "$CRATE" ]]; then
@@ -18,7 +18,7 @@ fi
 shift
 
 # compute the library directory (and export for Miri)
-MIRI_LIB_SRC=${MIRI_LIB_SRC:-$(MIRI_BE_RUSTC=host miri --print sysroot)/lib/rustlib/src/rust/library}
+MIRI_LIB_SRC=${MIRI_LIB_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/library}
 if ! test -d "$MIRI_LIB_SRC/core"; then
     echo "Rust source dir ($MIRI_LIB_SRC) does not contain a 'core' subdirectory."
     echo "Set MIRI_LIB_SRC to the Rust source directory, or install the rust-src component."
