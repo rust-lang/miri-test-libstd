@@ -87,6 +87,7 @@ std)
 simd)
     cd $MIRI_LIB_SRC/portable-simd
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
+    export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
 
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
