@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-DEFAULTFLAGS="-Zmiri-retag-fields -Zrandomize-layout -Zmiri-strict-provenance -Ainternal_features"
+DEFAULTFLAGS="-Zmiri-retag-fields -Zrandomize-layout -Zmiri-strict-provenance"
 
 # apply our patch
 rm -rf rust-src-patched
@@ -86,6 +86,7 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
+    export RUSTFLAGS="-Ainternal_features $RUSTFLAGS"
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
         cargo miri test --lib --tests -- --skip ptr \
