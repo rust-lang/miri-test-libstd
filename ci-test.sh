@@ -86,7 +86,8 @@ std)
     ;;
 simd)
     cd $MIRI_LIB_SRC/portable-simd
-    export RUSTFLAGS="-Ainternal_features $RUSTFLAGS"
+    export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
+
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
         cargo miri test --lib --tests -- --skip ptr \
