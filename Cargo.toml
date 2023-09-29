@@ -8,4 +8,5 @@ members = [
 exclude = [
   # stdarch has its own Cargo workspace
   "library/stdarch",
+  "rust-src-patched/library/stdarch",
 ]

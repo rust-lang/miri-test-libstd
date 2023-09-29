@@ -104,6 +104,15 @@ simd)
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
+stdarch)
+    for TARGET in x86_64-unknown-linux-gnu i686-unknown-linux-gnu; do
+        echo "::group::Testing stdarch ($TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS" \
+            ./run-stdarch-test.sh $TARGET \
+            2>&1 | ts -i '%.s  '
+        echo "::endgroup::"
+    done
+    ;;
 *)
     echo "Unknown command"
     exit 1
