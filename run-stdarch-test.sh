@@ -19,9 +19,9 @@ export TARGET="$1"
 
 case "$TARGET" in
 i586-*|i686-*|x86_64-*)
-    RUSTFLAGS="-C target-feature=+sse2"
+    RUSTFLAGS="-C target-feature=+ssse3"
     TEST_ARGS=(
-        core_arch::x86::{sse,sse2}::
+        core_arch::x86::{sse,sse2,sse3,ssse3}::
         core_arch::x86_64::{sse,sse2}::
         # FIXME add `#[cfg_attr(miri, ignore)]` to those tests in stdarch
         # These are nontemporal stores, fences, and CSR (FP env status register) accesses
@@ -39,8 +39,6 @@ i586-*|i686-*|x86_64-*)
         --skip test_mm_stream_si128
         --skip test_mm_stream_si32
         --skip test_mm_stream_si64
-        # FIXME not yet implemented
-        --skip test_mm_madd_epi16
         # FIXME fix those in stdarch
         --skip test_mm_rcp_ss # __m128(0.24997461, 13.0, 16.0, 100.0) != __m128(0.24993896, 13.0, 16.0, 100.0)
         --skip test_mm_store1_ps # attempt to subtract with overflow
