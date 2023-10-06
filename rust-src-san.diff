@@ -1,5 +1,5 @@
 diff --git a/library/alloc/tests/vec.rs b/library/alloc/tests/vec.rs
-index d44dcfbf673..28809512f07 100644
+index d44dcfbf673..cfa668c28e5 100644
 --- a/library/alloc/tests/vec.rs
 +++ b/library/alloc/tests/vec.rs
 @@ -1636,6 +1636,8 @@ fn test_reserve_exact() {
@@ -7,12 +7,12 @@ index d44dcfbf673..28809512f07 100644
  
  #[test]
 +// ASAN throws an error for requesting max allocation size
-+#[cfg_attr(sanitzer = "memory", no_sanitize)]
++#[cfg_attr(any(sanitzer = "memory", sanitizer = "address"), no_sanitize)]
  #[cfg_attr(miri, ignore)] // Miri does not support signalling OOM
  #[cfg_attr(target_os = "android", ignore)] // Android used in CI has a broken dlmalloc
  fn test_try_reserve() {
 diff --git a/library/core/tests/slice.rs b/library/core/tests/slice.rs
-index 865e702b5c2..c28fb2660aa 100644
+index 865e702b5c2..2e892672248 100644
 --- a/library/core/tests/slice.rs
 +++ b/library/core/tests/slice.rs
 @@ -1877,7 +1877,7 @@ fn sort_unstable() {
@@ -24,7 +24,15 @@ index 865e702b5c2..c28fb2660aa 100644
  fn select_nth_unstable() {
      use core::cmp::Ordering::{Equal, Greater, Less};
      use rand::seq::SliceRandom;
-@@ -2573,7 +2573,8 @@ macro_rules! empty_max_mut {
+@@ -2566,14 +2566,15 @@ fn $test_name() {
+ const EMPTY_MAX: &'static [()] = &[(); usize::MAX];
+ 
+ // can't be a constant due to const mutability rules
+-#[cfg(not(miri))] // unused in Miri
++#[cfg(not(any(miri, skip_slow_tests)))] // not used if the below tests are disabled
+ macro_rules! empty_max_mut {
+     () => {
+         &mut [(); usize::MAX] as _
      };
  }
  

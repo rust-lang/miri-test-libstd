@@ -54,7 +54,7 @@ cfi)
     # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
     # which conflicts
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi --cfg sanitizer=\"cfi\" \
-        -Cembed-bitcode=yes -Clinker-plugin-lto -Ccodegen-units=1"
+        -Cembed-bitcode=yes -Clto -Ccodegen-units=1"
     ;;
 kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi --cfg sanitizer=\"cfi\""
@@ -86,12 +86,6 @@ echo "Running tests with on target $TARGET with flags '$RUSTFLAGS'"
 case "$1" in
 core)
     echo "::group::Testing core"
-    # ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
-    ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests \
-        2>&1 | ts -i '%.s  '
-    echo "::endgroup::"
-    
-    echo "::group::Testing core"
     ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
@@ -119,12 +113,12 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     # CORE="time:: sync:: thread:: env::"
 
-    echo "::group::Testing std core"
+    echo "::group::Testing std"
     ./sanitizers-run-test.sh std --target "$TARGET" --lib --tests --  \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
-    echo "::group::Testing std core docs"
+    echo "::group::Testing std docs"
     ./sanitizers-run-test.sh std --target "$TARGET" --doc --  \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
@@ -137,13 +131,11 @@ simd)
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
 
     echo "::group::Testing portable-simd"
-    cargo test --lib --tests -- --skip ptr 2>&1 | ts -i '%.s  '
-    # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
-    cargo test --lib --tests -- ptr 2>&1 | ts -i '%.s  '
+    cargo test --lib --target "$TARGET" --tests -- 2>&1 | ts -i '%.s  '
     echo "::endgroup::"
 
     echo "::group::Testing portable-simd docs"
-    cargo test --doc 2>&1 | ts -i '%.s  '
+    cargo test --doc --target "$TARGET" 2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
 stdarch)
