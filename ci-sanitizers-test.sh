@@ -3,6 +3,11 @@ set -eauxo pipefail
 
 DEFAULTFLAGS="-Zrandomize-layout"
 
+if [ -Z "${TARGET+x}" ]; then
+    echo "Env TARGET must be set"
+    exit 1
+fi
+
 # apply our patch
 rm -rf rust-src-patched
 cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched
@@ -63,46 +68,38 @@ thread)
     exit 1
 esac
 
+export RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS"
+
+echo "Running tests with sanitizer=$SANITIZER on target $TARGET"
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
 case "$1" in
 core)
-    # A 64bit little-endian and a 32bit big-endian target.
-    # (Varying the OS is totally pointless for core.)
-    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing core ($TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh core --target $TARGET --lib --tests \
-            -- --skip align \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-        echo "::group::Testing core ($TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh core --target $TARGET --lib --tests \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-        echo "::group::Testing core docs ($TARGET, $SANITIZER)" && echo
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh core --target $TARGET --doc \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-    done
+    echo "::group::Testing core"
+    ./run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
+        2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
+    
+    echo "::group::Testing core"
+    ./run-test.sh core --target "$TARGET" --lib --tests \
+        2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
+    
+    echo "::group::Testing core docs" && echo
+    ./run-test.sh core --target "$TARGET" --doc \
+        2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
     ;;
 alloc)
-    # A 64bit little-endian and a 32bit big-endian target.
-    # (Varying the OS is not really worth it for alloc.)
-    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing alloc ($SANITIZER, $TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh alloc --target $TARGET --lib --tests \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-        echo "::group::Testing alloc docs ($TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh alloc --target $TARGET --doc \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-    done
+    echo "::group::Testing alloc"
+        ./run-test.sh alloc --target "$TARGET" --lib --tests \
+        2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
+
+    echo "::group::Testing alloc docs"
+        ./run-test.sh alloc --target "$TARGET" --doc \
+        2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
     ;;
 std)
     # Modules that we skip entirely, because they need a lot of shims we don't support.
@@ -111,62 +108,50 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
-    for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin x86_64-pc-windows-msvc i686-pc-windows-gnu; do
-        echo "::group::Testing std core ($CORE on $TARGET)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh std --target $TARGET --lib --tests \
-            -- $CORE \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-test.sh std --target $TARGET --doc \
-            -- $CORE \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-    done
-    # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (all except for $SKIP, $SANITIZER)"
-    RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-        ./run-test.sh std --lib --tests \
-        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
+    echo "::group::Testing std core ($CORE on $TARGET)"
+    ./run-test.sh std --target "$TARGET" --lib --tests \
+        -- $CORE \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing remaining std docs (all except for $SKIP, $SANITIZER)"
-    RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-        ./run-test.sh std --doc \
-        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
+    
+    echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
+        ./run-test.sh std --target "$TARGET" --doc \
+        -- $CORE \
         2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
+    
+    # "sleep" has a thread leak that we have to ignore
+    echo "::group::Testing remaining std (all except for $SKIP, $SANITIZER)"
+        ./run-test.sh std --lib --tests \
+        2>&1 | ts -i '%.s  '
+        # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
+    echo "::endgroup::"
+    
+    echo "::group::Testing remaining std docs (all except for $SKIP, $SANITIZER)"
+        ./run-test.sh std --doc \
+        2>&1 | ts -i '%.s  '
+        # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
     echo "::endgroup::"
     ;;
 simd)
-    cd $LIB_SRC/portable-simd
-    export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
+    cd "$LIB_SRC/portable-simd"
+    export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
 
     echo "::group::Testing portable-simd"
-    RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-        cargo miri test --lib --tests -- --skip ptr \
-        2>&1 | ts -i '%.s  '
+    cargo test --lib --tests -- --skip ptr 2>&1 | ts -i '%.s  '
     # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
-    RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-        cargo miri test --lib --tests -- ptr \
-        2>&1 | ts -i '%.s  '
+    cargo test --lib --tests -- ptr 2>&1 | ts -i '%.s  '
     echo "::endgroup::"
+
     echo "::group::Testing portable-simd docs"
-    RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-        cargo miri test --doc \
-        2>&1 | ts -i '%.s  '
+    cargo test --doc 2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
 stdarch)
-    for TARGET in x86_64-unknown-linux-gnu i686-unknown-linux-gnu; do
-        echo "::group::Testing stdarch ($TARGET, $SANITIZER)"
-        RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS" \
-            ./run-stdarch-test.sh $TARGET \
-            2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-    done
+    echo "::group::Testing stdarch"
+    ./run-stdarch-test.sh "$TARGET" 2>&1 | ts -i '%.s  '
+    echo "::endgroup::"
     ;;
 *)
     echo "Unknown command"

@@ -14,5 +14,5 @@ else
     RUST_TOOLCHAIN=$(cat rust-version)
 fi
 echo "Installing Rust version: $RUST_TOOLCHAIN"
-rustup toolchain install "$RUST_TOOLCHAIN"
+rustup toolchain install "$RUST_TOOLCHAIN" --components rust-src
 rustup override set "$RUST_TOOLCHAIN"
