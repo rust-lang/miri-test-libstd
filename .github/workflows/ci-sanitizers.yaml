@@ -20,7 +20,7 @@ jobs:
       max-parallel: 10 # 30 jobs to run...
       matrix:
         crate: [core, alloc, std, simd, stdarch]
-        sanitizers: [address, memory, thread, cfi, safestack, leak]
+        sanitizer: [address, memory, thread, cfi, safestack, leak]
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     steps:
