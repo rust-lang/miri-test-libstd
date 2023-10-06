@@ -1,5 +1,17 @@
+diff --git a/library/alloc/src/lib.rs b/library/alloc/src/lib.rs
+index cd3648214a4..c16d3451da5 100644
+--- a/library/alloc/src/lib.rs
++++ b/library/alloc/src/lib.rs
+@@ -138,6 +138,7 @@
+ #![feature(maybe_uninit_slice)]
+ #![feature(maybe_uninit_uninit_array)]
+ #![feature(maybe_uninit_uninit_array_transpose)]
++#![feature(no_sanitize)]
+ #![feature(pattern)]
+ #![feature(pointer_byte_offsets)]
+ #![feature(ptr_addr_eq)]
 diff --git a/library/alloc/tests/vec.rs b/library/alloc/tests/vec.rs
-index d44dcfbf673..cfa668c28e5 100644
+index d44dcfbf673..386865df6a5 100644
 --- a/library/alloc/tests/vec.rs
 +++ b/library/alloc/tests/vec.rs
 @@ -1636,6 +1636,8 @@ fn test_reserve_exact() {
@@ -7,7 +19,7 @@ index d44dcfbf673..cfa668c28e5 100644
  
  #[test]
 +// ASAN throws an error for requesting max allocation size
-+#[cfg_attr(any(sanitzer = "memory", sanitizer = "address"), no_sanitize)]
++#[no_sanitize(address, memory, leak)]
  #[cfg_attr(miri, ignore)] // Miri does not support signalling OOM
  #[cfg_attr(target_os = "android", ignore)] // Android used in CI has a broken dlmalloc
  fn test_try_reserve() {
