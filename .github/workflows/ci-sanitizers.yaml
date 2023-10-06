@@ -28,6 +28,9 @@ jobs:
            - sanitizer: cfi 
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
+    # continue running if other tests fail. Disable this once we get out of the
+    # prototype phase
+    if: always()
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
