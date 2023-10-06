@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eauxo pipefail
 
-RUSTFLAGS="-Zrandomize-layout"
+RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full"
 
 if [ -z "${TARGET+x}" ]; then
     echo "Env TARGET must be set"
@@ -50,7 +50,7 @@ memtag)
 cfi)
     # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
     # which conflicts
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Ccodegen-units=1"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Cinker-plugin-lto -Ccodegen-units=1"
     ;;
 kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"

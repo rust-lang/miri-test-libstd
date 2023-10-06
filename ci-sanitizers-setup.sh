@@ -3,8 +3,8 @@ set -eauxo pipefail
 
 ## Shared setup code for CI jobs
 
-# We need 'ts'
-sudo apt-get -y install moreutils
+# We need 'ts' and 'llvm-symbolizer'
+sudo apt-get -y install moreutils llvm
 echo
 
 # And of course we need Rust
