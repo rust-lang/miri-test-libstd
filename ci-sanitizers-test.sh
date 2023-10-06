@@ -53,10 +53,10 @@ kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"
     ;;
 safestack)
-    # FIXME: aarch64-linux-android only
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=safestack"
     ;;
 shadow-call-stack)
+    # FIXME: aarch64-linux-android only
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=shadow-call-stack"
     echo "we don't have a CI target for this yet"
     exit 1
