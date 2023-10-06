@@ -28,6 +28,7 @@ jobs:
           - sanitizer: cfi 
           # FIXME: we get some failures pretty early here
           - sanitizer: memory
+          - sanitizer: leak
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     # continue running if other tests fail. Disable this once we get out of the
