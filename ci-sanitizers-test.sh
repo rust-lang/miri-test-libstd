@@ -109,14 +109,12 @@ std)
     CORE="time:: sync:: thread:: env::"
 
     echo "::group::Testing std core ($CORE on $TARGET)"
-    ./run-test.sh std --target "$TARGET" --lib --tests \
-        -- $CORE \
+    ./run-test.sh std --target "$TARGET" --lib --tests -- $CORE \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
-        ./run-test.sh std --target "$TARGET" --doc \
-        -- $CORE \
+        ./run-test.sh std --target "$TARGET" --doc -- $CORE \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
