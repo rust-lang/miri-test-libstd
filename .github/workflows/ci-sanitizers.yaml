@@ -41,7 +41,7 @@ jobs:
         run: bash ./ci-sanitizers-setup.sh
       - name: Run ${{ matrix.sanitizer }} sanitizer
         # Mark everything as pass just so GH doesn't cancel on us as soon as there is a failure
-        run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }} && echo 'good!' || echo 'fail!''
+        run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }} && echo 'good!' || echo 'fail!'
   mark_failure:
     runs-on: ubuntu-latest
     steps:
