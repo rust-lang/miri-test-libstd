@@ -1,5 +1,5 @@
 [package]
-name = "std_miri_test"
+name = "std_sanity_test"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-lang/rust.git"
@@ -10,7 +10,7 @@ edition = "2021"
 build = "../library/std/build.rs"
 
 [lib]
-name = "std_miri_test"
+name = "std_sanity_test"
 path = "../library/std/src/lib.rs"
 
 [dependencies]

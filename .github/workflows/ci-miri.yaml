@@ -1,4 +1,4 @@
-name: CI
+name: Miri CI
 
 on:
   push:
@@ -16,45 +16,45 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: bash ./ci-setup.sh
+        run: bash ./ci-miri-setup.sh
       - name: Test
-        run: bash ./ci-test.sh core
+        run: bash ./ci-miri-test.sh core
 
   test-alloc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: bash ./ci-setup.sh
+        run: bash ./ci-miri-setup.sh
       - name: Test
-        run: bash ./ci-test.sh alloc
+        run: bash ./ci-miri-test.sh alloc
 
   test-std:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: bash ./ci-setup.sh
+        run: bash ./ci-miri-setup.sh
       - name: Test
-        run: bash ./ci-test.sh std
+        run: bash ./ci-miri-test.sh std
 
   test-simd:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: bash ./ci-setup.sh
+        run: bash ./ci-miri-setup.sh
       - name: Test
-        run: bash ./ci-test.sh simd
+        run: bash ./ci-miri-test.sh simd
 
   test-stdarch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: bash ./ci-setup.sh
+        run: bash ./ci-miri-setup.sh
       - name: Test
-        run: bash ./ci-test.sh stdarch
+        run: bash ./ci-miri-test.sh stdarch
 
   # Send a Zulip notification when a cron job fails
   cron-fail-notify:

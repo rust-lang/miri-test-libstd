@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "core_miri_test",
-  "alloc_miri_test",
-  "std_miri_test",
+  "core_sanity_test",
+  "alloc_sanity_test",
+  "std_sanity_test",
 ]
 
 exclude = [

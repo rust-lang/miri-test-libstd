@@ -1,12 +1,12 @@
 [package]
-name = "alloc_miri_test"
+name = "alloc_sanity_test"
 version = "0.0.0"
 autotests = false
 autobenches = false
 edition = "2021"
 
 [lib]
-name = "alloc_miri_test"
+name = "alloc_sanity_test"
 path = "../library/alloc/src/lib.rs"
 
 [features]

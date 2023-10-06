@@ -1,0 +1,88 @@
+name: Sanitizers CI
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches:
+      - 'master'
+  schedule:
+    - cron: '00 2 * * *' # At 02:00 UTC every day (like rustup-components-history).
+
+jobs:
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        run: bash ./ci-sanitizers-setup.sh
+      - name: Test ASAN
+        run: bash ./ci-sanitizers-test.sh core address
+      - name: Test MSAN
+        run: bash ./ci-sanitizers-test.sh core memory
+      - name: Test TSAN
+        run: bash ./ci-sanitizers-test.sh core thread
+      - name: Test CFISAN
+        run: bash ./ci-sanitizers-test.sh core cfi
+
+  # test-alloc:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup environment
+  #       run: bash ./ci-sanitizers-setup.sh
+  #     - name: Test
+  #       run: bash ./ci-sanitizers-test.sh alloc
+
+  # test-std:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup environment
+  #       run: bash ./ci-sanitizers-setup.sh
+  #     - name: Test
+  #       run: bash ./ci-sanitizers-test.sh std
+
+  # test-simd:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup environment
+  #       run: bash ./ci-sanitizers-setup.sh
+  #     - name: Test
+  #       run: bash ./ci-sanitizers-test.sh simd
+
+  # test-stdarch:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup environment
+  #       run: bash ./ci-sanitizers-setup.sh
+  #     - name: Test
+  #       run: bash ./ci-sanitizers-test.sh stdarch
+
+  # Send a Zulip notification when a cron job fails
+  # cron-fail-notify:
+  #   name: cronjob failure notification
+  #   runs-on: ubuntu-latest
+  #   needs: [test-core, test-alloc, test-std, test-simd]
+  #   if: github.event_name == 'schedule' && (failure() || cancelled())
+  #   steps:
+  #     - name: Install zulip-send
+  #       run: pip3 install zulip
+  #     - name: Send Zulip notification
+  #       shell: bash
+  #       env:
+  #         ZULIP_BOT_EMAIL: ${{ secrets.ZULIP_BOT_EMAIL }}
+  #         ZULIP_API_TOKEN: ${{ secrets.ZULIP_API_TOKEN }}
+  #       run: |
+  #         ~/.local/bin/zulip-send --stream miri --subject "Cron Job Failure (miri-test-libstd, $(date -u +%Y-%m))" \
+  #           --message 'Dear @*T-miri*,
+
+  #         The standard library test suite is [failing under Miri]('"https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"'). Would you mind investigating this issue?
+
+  #         Thanks in advance!
+  #         Sincerely,
+  #         The Miri Cronjobs Bot' \
+  #           --user $ZULIP_BOT_EMAIL --api-key $ZULIP_API_TOKEN --site https://rust-lang.zulipchat.com

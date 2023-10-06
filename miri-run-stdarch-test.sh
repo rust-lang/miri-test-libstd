@@ -58,7 +58,7 @@ export STDARCH_TEST_EVERYTHING=1
 # Needed to pass the STDARCH_TEST_EVERYTHING environment variable
 export MIRIFLAGS="${MIRIFLAGS:-} -Zmiri-disable-isolation"
 
-cd $MIRI_LIB_SRC/stdarch
+cd "$MIRI_LIB_SRC/stdarch"
 cargo miri test \
     --target "$TARGET" \
     --manifest-path=crates/core_arch/Cargo.toml \
