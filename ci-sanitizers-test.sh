@@ -150,7 +150,7 @@ simd)
     ;;
 stdarch)
     echo "::group::Testing stdarch"
-    ./run-stdarch-test.sh "$TARGET" 2>&1 | ts -i '%.s  '
+    ./sanitizers-run-stdarch-test.sh "$TARGET" 2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
 *)

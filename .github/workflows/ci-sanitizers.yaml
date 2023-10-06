@@ -17,26 +17,18 @@ env:
 jobs:
   enable_matrix:
     strategy:
+      max-parallel: 10 # 30 jobs to run...
       matrix:
         crate: [core, alloc, std, simd, stdarch]
-    name: Test ${{ matrix.crate }}
+        sanitizers: [address, memory, thread, cfi, safestack, leak]
+    name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
         run: bash ./ci-sanitizers-setup.sh
-      - name: Test ASAN (Address Sanitizer)
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} address
-      - name: Test MSAN (MemorySanitizer)
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} memory
-      - name: Test TSAN (ThreadSanitizer)
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} thread
-      - name: Test CFISAN (ControlFlowIntegrity)
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} cfi
-      - name: Test SafeStack
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} safestack
-      - name: Test LSAN (LeakSanitizer)
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} leak
+      - name: Run ${{ matrix.sanitizer }}
+        run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }}
 
   # Send a Zulip notification when a cron job fails
   # cron-fail-notify:
