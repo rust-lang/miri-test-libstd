@@ -44,7 +44,7 @@ jobs:
         run: >
           ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }} &&
             echo 'good!' ||
-            echo "::endgroup::"; echo 'fail!'
+            printf "::endgroup::\nfail!\n";
   mark_failure:
     runs-on: ubuntu-latest
     steps:

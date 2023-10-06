@@ -5,6 +5,26 @@ set -eauxo pipefail
 RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full -Csymbol-mangling-version=v0 \
     --cfg skip_slow_tests"
 
+# see https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
+# and https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
+asan_opts_arr=(
+    # catch bad global dependencies
+    check_initialization_order=true
+    detect_stack_use_after_return=true
+    # we don't use cstrings much but it could be easy to miss the null
+    strict_string_checks=true
+    # give a bit of a hand tracing segfaults
+    dump_instruction_bytes=true
+    # detect operations on pointers to different objects
+    detect_invalid_pointer_pairs=2
+    # allow the allocator to return 0 (which we should generally handle well)
+    # rather than crashing on OOM
+    allocator_may_return_null=true
+)
+
+export ASAN_OPTIONS="${ASAN_OPTIONS:-} ${asan_opts_arr[*]}"
+
+
 if [ -z "${TARGET+x}" ]; then
     echo "Env TARGET must be set"
     exit 1
@@ -27,6 +47,10 @@ echo "SYMBOLIZER: $(which llvm-symbolizer || none)"
 
 case "$2" in
 address)
+    # ASAN poisons regions around allocated memory and memory that has been
+    # freed, then tracks all pointer use to see whether poisoned regions are
+    # accessed
+
     # FIXME: if on aarch64-{unknown}-linux-{android, gnu}, we can use `hwaddress`
     # instead of `address` which should be faster. Unfortunately we probably
     # don't have that in CI
