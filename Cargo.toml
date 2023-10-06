@@ -1,4 +1,5 @@
 [workspace]
+workspace.resolver = "2"
 members = [
   "core_sanity_test",
   "alloc_sanity_test",

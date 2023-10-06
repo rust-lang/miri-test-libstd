@@ -46,8 +46,8 @@ memtag)
     exit 1
     ;;
 cfi)
-    # cfi needs LTO
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Clto"
+    # cfi needs LTO and 1 CGU...
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Clto -Ccodegen-units=1"
     ;;
 kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"
