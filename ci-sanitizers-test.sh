@@ -10,6 +10,8 @@ RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full -Csymbol-mangling-version=v0 \
 asan_opts_arr=(
     # catch bad global dependencies
     check_initialization_order=true
+    # additional global checks
+    strict_init_order=true
     detect_stack_use_after_return=true
     # we don't use cstrings much but it could be easy to miss the null
     strict_string_checks=true
@@ -43,7 +45,8 @@ cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched-san
 LIB_SRC="$(pwd)/rust-src-patched-san/library"
 export LIB_SRC
 
-echo "SYMBOLIZER: $(which llvm-symbolizer || none)"
+# make sure we have symbolizer so we get useful traces
+echo which llvm-symbolizer
 
 case "$2" in
 address)
@@ -66,6 +69,8 @@ kasan)
     exit 1
     ;;
 memory)
+    # MSAN tracks memory initialization and gives an error if it is read before
+    # being written. It is somewhat more fragile than other sanitizers
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memory --cfg sanitizer=\"memory\""
     ;;
 memtag)
@@ -94,6 +99,9 @@ shadow-call-stack)
     exit 1
     ;;
 leak)
+    # LeakSanitizer looks for memory leaks at the end. It is actually part of
+    # ASAN so we don't really need to run it on its own. Integration test I guess?
+    # https://clang.llvm.org/docs/AddressSanitizer.html#id8
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=leak --cfg sanitizer=\"leak\""
     ;;
 thread)
