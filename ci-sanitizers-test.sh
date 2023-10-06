@@ -1,9 +1,9 @@
 #!/bin/bash
 set -eauxo pipefail
 
-DEFAULTFLAGS="-Zrandomize-layout"
+RUSTFLAGS="-Zrandomize-layout"
 
-if [ -Z "${TARGET+x}" ]; then
+if [ -z "${TARGET+x}" ]; then
     echo "Env TARGET must be set"
     exit 1
 fi
@@ -20,7 +20,7 @@ address)
     # FIXME: if on aarch64-{unknown}-linux-{android, gnu}, we can use `hwaddress`
     # instead of `address` which should be faster. Unfortunately we probably
     # don't have that in CI
-    SANITIZER=address
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=address"
     ;;
 hwaddress)
     # see above
@@ -32,45 +32,42 @@ kasan)
     exit 1
     ;;
 memory)
-    SANITIZER=memory
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memory"
     ;;
 memtag)
     # FIXME: alternative to MSAN with the same target restrictions as hwaddress
-    SANITIZER=memtag
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memtag"
     ecbo "we don't have a CI target for this yet"
     exit 1
     ;;
 cfi)
-    SANITIZER=cfi
     # cfi needs LTO
-    EXTRAFLAGS="-Clto"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Clto"
     ;;
 kcfi)
-    SANITIZER=kcfi
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"
     ;;
 safestack)
     # FIXME: aarch64-linux-android only
-    SANITIZER=safestack
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=safestack"
     ;;
 shadow-call-stack)
-    SANITIZER=shadow-call-stack
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=shadow-call-stack"
     echo "we don't have a CI target for this yet"
     exit 1
     ;;
 leak)
-    SANITIZER=leak
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=leak"
     ;;
 thread)
-    SANITIZER=thread
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=thread"
     ;;
 *)
     echo "unknown sanitizer $2"
     exit 1
 esac
 
-export RUSTFLAGS="$DEFAULTFLAGS -Zsanitizer=$SANITIZER $EXTRAFLAGS"
-
-echo "Running tests with sanitizer=$SANITIZER on target $TARGET"
+echo "Running tests with on target $TARGET with flags '$RUSTFLAGS'"
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
 case "$1" in
@@ -109,12 +106,12 @@ std)
     CORE="time:: sync:: thread:: env::"
 
     echo "::group::Testing std core ($CORE on $TARGET)"
-    ./run-test.sh std --target "$TARGET" --lib --tests -- $CORE \
+    ./run-test.sh std --target "$TARGET" --lib --tests -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
-        ./run-test.sh std --target "$TARGET" --doc -- $CORE \
+        ./run-test.sh std --target "$TARGET" --doc -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
