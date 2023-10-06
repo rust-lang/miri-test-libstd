@@ -34,8 +34,9 @@ jobs:
       - name: Test CFISAN (ControlFlowIntegrity)
         run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} cfi
       - name: Test SafeStack
-        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} leak
+        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} safestack
       - name: Test LSAN (LeakSanitizer)
+        run: bash ./ci-sanitizers-test.sh ${{ matrix.crate }} leak
 
   # Send a Zulip notification when a cron job fails
   # cron-fail-notify:
