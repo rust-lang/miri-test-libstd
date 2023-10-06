@@ -11,7 +11,7 @@ index cd3648214a4..c16d3451da5 100644
  #![feature(pointer_byte_offsets)]
  #![feature(ptr_addr_eq)]
 diff --git a/library/alloc/tests/vec.rs b/library/alloc/tests/vec.rs
-index d44dcfbf673..386865df6a5 100644
+index d44dcfbf673..af08cb46ea9 100644
 --- a/library/alloc/tests/vec.rs
 +++ b/library/alloc/tests/vec.rs
 @@ -1636,6 +1636,8 @@ fn test_reserve_exact() {
@@ -19,12 +19,12 @@ index d44dcfbf673..386865df6a5 100644
  
  #[test]
 +// ASAN throws an error for requesting max allocation size
-+#[no_sanitize(address, memory, leak)]
++#[no_sanitize(address, memory)]
  #[cfg_attr(miri, ignore)] // Miri does not support signalling OOM
  #[cfg_attr(target_os = "android", ignore)] // Android used in CI has a broken dlmalloc
  fn test_try_reserve() {
 diff --git a/library/core/tests/slice.rs b/library/core/tests/slice.rs
-index 865e702b5c2..2e892672248 100644
+index 865e702b5c2..7e4eb6d524e 100644
 --- a/library/core/tests/slice.rs
 +++ b/library/core/tests/slice.rs
 @@ -1877,7 +1877,7 @@ fn sort_unstable() {
@@ -36,12 +36,17 @@ index 865e702b5c2..2e892672248 100644
  fn select_nth_unstable() {
      use core::cmp::Ordering::{Equal, Greater, Less};
      use rand::seq::SliceRandom;
-@@ -2566,14 +2566,15 @@ fn $test_name() {
+@@ -2562,18 +2562,19 @@ fn $test_name() {
+     (take_last_mut_empty, (), None, &mut []),
+ }
+ 
+-#[cfg(not(miri))] // unused in Miri
++#[cfg(not(any(miri, skip_slow_tests)))] // not used if the below test macro is disabled
  const EMPTY_MAX: &'static [()] = &[(); usize::MAX];
  
  // can't be a constant due to const mutability rules
 -#[cfg(not(miri))] // unused in Miri
-+#[cfg(not(any(miri, skip_slow_tests)))] // not used if the below tests are disabled
++#[cfg(not(any(miri, skip_slow_tests)))] // not used if the below test macro is disabled
  macro_rules! empty_max_mut {
      () => {
          &mut [(); usize::MAX] as _
