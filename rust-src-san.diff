@@ -20,7 +20,7 @@ index 865e702b5c2..c28fb2660aa 100644
  #[test]
  #[cfg(not(target_arch = "wasm32"))]
 -#[cfg_attr(miri, ignore)] // Miri is too slow
-+#[cfg_attr(any(miri. skip_slow_tests), ignore)] // Miri is too slow
++#[cfg_attr(any(miri, skip_slow_tests), ignore)] // Miri is too slow
  fn select_nth_unstable() {
      use core::cmp::Ordering::{Equal, Greater, Less};
      use rand::seq::SliceRandom;
