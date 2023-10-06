@@ -26,7 +26,6 @@ jobs:
           # FIXME: cfi is a mix of lto, bitcode, 1-cgu, and it doesn't seem to
           # even compile
            - sanitizer: cfi 
-             crate: core
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     steps:
