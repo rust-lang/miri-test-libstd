@@ -34,17 +34,18 @@ jobs:
     # continue running if other tests fail. Disable this once we get out of the
     # prototype phase
     if: always()
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
         run: bash ./ci-sanitizers-setup.sh
-      - name: Run ${{ matrix.sanitizer }}
+      - name: Run ${{ matrix.sanitizer }} sanitizer
         # Mark everything as pass just so GH doesn't cancel on us as soon as there is a failure
         run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }} && echo 'good!' || echo 'fail!''
   mark_failure:
     runs-on: ubuntu-latest
     steps:
-      - run: sleep 2000 && echo that's enough 'time!'; exit 1
+      - run: sleep 2000 && echo 'that is enough time!'; exit 1
 
   # Send a Zulip notification when a cron job fails
   # cron-fail-notify:

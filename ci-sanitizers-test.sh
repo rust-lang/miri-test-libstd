@@ -50,7 +50,7 @@ memtag)
 cfi)
     # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
     # which conflicts
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Clto -Cembed-bitcode=yes -Ccodegen-units=1"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Ccodegen-units=1"
     ;;
 kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"
@@ -81,7 +81,8 @@ echo "Running tests with on target $TARGET with flags '$RUSTFLAGS'"
 case "$1" in
 core)
     echo "::group::Testing core"
-    ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
+    # ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
+    ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
@@ -108,33 +109,22 @@ alloc)
     ;;
 std)
     # Modules that we skip entirely, because they need a lot of shims we don't support.
-    SKIP="fs:: net:: process:: sys:: sys_common::net::"
+    # SKIP="fs:: net:: process:: sys:: sys_common::net::"
     # Core modules, that we are testing on a bunch of targets.
     # These are the most OS-specific (among the modules we do not skip).
-    CORE="time:: sync:: thread:: env::"
+    # CORE="time:: sync:: thread:: env::"
 
     echo "::group::Testing std core"
-    ./sanitizers-run-test.sh std --target "$TARGET" --lib --tests -- "$CORE" \
+    ./sanitizers-run-test.sh std --target "$TARGET" --lib --tests --  \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing std core docs"
-    ./sanitizers-run-test.sh std --target "$TARGET" --doc -- "$CORE" \
+    ./sanitizers-run-test.sh std --target "$TARGET" --doc --  \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (all except for $SKIP)"
-    ./sanitizers-run-test.sh std --lib --tests \
-        2>&1 | ts -i '%.s  '
-        # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
-    echo "::endgroup::"
-    
-    echo "::group::Testing remaining std docs (all except for $SKIP)"
-    ./sanitizers-run-test.sh std --doc \
-        2>&1 | ts -i '%.s  '
-        # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
-    echo "::endgroup::"
     ;;
 simd)
     cd "$LIB_SRC/portable-simd"
