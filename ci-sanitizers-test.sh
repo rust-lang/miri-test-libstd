@@ -20,6 +20,8 @@ cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched
 LIB_SRC="$(pwd)/rust-src-patched/library"
 export LIB_SRC
 
+echo "SYMBOLIZER: $(which llvm-symbolizer || none)"
+
 case "$2" in
 address)
     # FIXME: if on aarch64-{unknown}-linux-{android, gnu}, we can use `hwaddress`

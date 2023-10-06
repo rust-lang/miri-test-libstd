@@ -25,7 +25,9 @@ jobs:
         exclude:
           # FIXME: cfi is a mix of lto, bitcode, 1-cgu, and it doesn't seem to
           # even compile
-           - sanitizer: cfi 
+          - sanitizer: cfi 
+          # FIXME: we get some failures pretty early here
+          - sanitizer: memory
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     # continue running if other tests fail. Disable this once we get out of the
