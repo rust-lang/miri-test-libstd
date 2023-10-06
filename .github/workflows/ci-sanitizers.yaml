@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '00 2 * * *' # At 02:00 UTC every day (like rustup-components-history).
 
+# only one target for now
+env:
+  TARGET: x86_64-unknown-linux-gnu
+
 jobs:
   test-core:
     runs-on: ubuntu-latest

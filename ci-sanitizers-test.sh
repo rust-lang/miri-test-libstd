@@ -8,6 +8,11 @@ if [ -z "${TARGET+x}" ]; then
     exit 1
 fi
 
+if [ "$#" -ne 2 ]; then
+    echo "usage: TARGET=target ./this-script.sh lib-name sanitizer-name"
+    exit 1
+fi
+
 # apply our patch
 rm -rf rust-src-patched
 cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched
@@ -73,28 +78,28 @@ echo "Running tests with on target $TARGET with flags '$RUSTFLAGS'"
 case "$1" in
 core)
     echo "::group::Testing core"
-    ./run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
+    ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests -- --skip align \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing core"
-    ./run-test.sh core --target "$TARGET" --lib --tests \
+    ./sanitizers-run-test.sh core --target "$TARGET" --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing core docs" && echo
-    ./run-test.sh core --target "$TARGET" --doc \
+    ./sanitizers-run-test.sh core --target "$TARGET" --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
 alloc)
     echo "::group::Testing alloc"
-        ./run-test.sh alloc --target "$TARGET" --lib --tests \
+    ./sanitizers-run-test.sh alloc --target "$TARGET" --lib --tests \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
 
     echo "::group::Testing alloc docs"
-        ./run-test.sh alloc --target "$TARGET" --doc \
+    ./sanitizers-run-test.sh alloc --target "$TARGET" --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
@@ -106,24 +111,24 @@ std)
     CORE="time:: sync:: thread:: env::"
 
     echo "::group::Testing std core ($CORE on $TARGET)"
-    ./run-test.sh std --target "$TARGET" --lib --tests -- "$CORE" \
+    ./sanitizers-run-test.sh std --target "$TARGET" --lib --tests -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
-        ./run-test.sh std --target "$TARGET" --doc -- "$CORE" \
+    ./sanitizers-run-test.sh std --target "$TARGET" --doc -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     # "sleep" has a thread leak that we have to ignore
     echo "::group::Testing remaining std (all except for $SKIP, $SANITIZER)"
-        ./run-test.sh std --lib --tests \
+    ./sanitizers-run-test.sh std --lib --tests \
         2>&1 | ts -i '%.s  '
         # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
     echo "::endgroup::"
     
     echo "::group::Testing remaining std docs (all except for $SKIP, $SANITIZER)"
-        ./run-test.sh std --doc \
+    ./sanitizers-run-test.sh std --doc \
         2>&1 | ts -i '%.s  '
         # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
     echo "::endgroup::"
