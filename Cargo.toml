@@ -1,12 +1,15 @@
 [workspace]
+resolver = "2"
+
 members = [
-  "core_miri_test",
-  "alloc_miri_test",
-  "std_miri_test",
+  "core_run_test",
+  "alloc_run_test",
+  "std_run_test",
 ]
 
 exclude = [
   # stdarch has its own Cargo workspace
   "library/stdarch",
   "rust-src-patched/library/stdarch",
+  "rust-src-patched-san/library/stdarch",
 ]

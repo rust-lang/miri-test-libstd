@@ -5,9 +5,10 @@ DEFAULTFLAGS="-Zmiri-retag-fields -Zrandomize-layout -Zmiri-strict-provenance"
 
 # apply our patch
 rm -rf rust-src-patched
-cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
+cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched
 ( cd rust-src-patched && patch -f -p1 < ../rust-src.diff >/dev/null ) || ( echo "Applying rust-src.diff failed!" && exit 1 )
-export MIRI_LIB_SRC=$(pwd)/rust-src-patched/library
+MIRI_LIB_SRC="$(pwd)/rust-src-patched/library"
+export MIRI_LIB_SRC
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
 case "$1" in
@@ -60,13 +61,13 @@ std)
         echo "::group::Testing std core ($CORE on $TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --lib --tests \
-            -- $CORE \
+            -- "$CORE" \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing std core docs ($CORE on $TARGET, ignore leaks)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
-            -- $CORE \
+            -- "$CORE" \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
@@ -85,7 +86,7 @@ std)
     echo "::endgroup::"
     ;;
 simd)
-    cd $MIRI_LIB_SRC/portable-simd
+    cd "$MIRI_LIB_SRC/portable-simd"
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
 
@@ -108,7 +109,7 @@ stdarch)
     for TARGET in x86_64-unknown-linux-gnu i686-unknown-linux-gnu; do
         echo "::group::Testing stdarch ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS" \
-            ./run-stdarch-test.sh $TARGET \
+            ./miri-run-stdarch-test.sh $TARGET \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
