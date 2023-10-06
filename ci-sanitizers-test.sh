@@ -113,24 +113,24 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
-    echo "::group::Testing std core ($CORE on $TARGET)"
+    echo "::group::Testing std core"
     ./sanitizers-run-test.sh std --target "$TARGET" --lib --tests -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
-    echo "::group::Testing std core docs ($CORE on $TARGET, $SANITIZER)"
+    echo "::group::Testing std core docs"
     ./sanitizers-run-test.sh std --target "$TARGET" --doc -- "$CORE" \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     
     # "sleep" has a thread leak that we have to ignore
-    echo "::group::Testing remaining std (all except for $SKIP, $SANITIZER)"
+    echo "::group::Testing remaining std (all except for $SKIP)"
     ./sanitizers-run-test.sh std --lib --tests \
         2>&1 | ts -i '%.s  '
         # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
     echo "::endgroup::"
     
-    echo "::group::Testing remaining std docs (all except for $SKIP, $SANITIZER)"
+    echo "::group::Testing remaining std docs (all except for $SKIP)"
     ./sanitizers-run-test.sh std --doc \
         2>&1 | ts -i '%.s  '
         # -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
