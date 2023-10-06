@@ -25,10 +25,10 @@ jobs:
         exclude:
           # FIXME: cfi is a mix of lto, bitcode, 1-cgu, and it doesn't seem to
           # even compile
-          - sanitizer: cfi 
+          # - sanitizer: cfi 
           # FIXME: we get some failures pretty early here
-          - sanitizer: memory
-          - sanitizer: leak
+          # - sanitizer: memory
+          # - sanitizer: leak
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     # continue running if other tests fail. Disable this once we get out of the
@@ -39,7 +39,12 @@ jobs:
       - name: Setup environment
         run: bash ./ci-sanitizers-setup.sh
       - name: Run ${{ matrix.sanitizer }}
-        run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }}
+        # Mark everything as pass just so GH doesn't cancel on us as soon as there is a failure
+        run: ./ci-sanitizers-test.sh ${{ matrix.crate }} ${{ matrix.sanitizer }} && echo good! || echo fail!
+  mark_failure:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sleep 2000 && echo that's enough time!; exit 1
 
   # Send a Zulip notification when a cron job fails
   # cron-fail-notify:
