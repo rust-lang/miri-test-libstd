@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eauxo pipefail
 
-RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full"
+# llvm-symbolizer supports v0 mangling
+RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full -Csymbol-mangling-version=v0 --cfg=skip-slow-tests"
 
 if [ -z "${TARGET+x}" ]; then
     echo "Env TARGET must be set"
@@ -14,9 +15,10 @@ if [ "$#" -ne 2 ]; then
 fi
 
 # apply our patch
-rm -rf rust-src-patched
-cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched
-( cd rust-src-patched && patch -f -p1 < ../rust-src.diff >/dev/null ) || ( echo "Applying rust-src.diff failed!" && exit 1 )
+rm -rf rust-src-patched-san
+cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched-san
+( cd rust-src-patched-san && patch -f -p1 < ../rust-src-san.diff  ) ||
+    ( echo "Applying rust-src-san.diff failed!" && exit 1 )
 LIB_SRC="$(pwd)/rust-src-patched/library"
 export LIB_SRC
 
@@ -50,7 +52,7 @@ memtag)
 cfi)
     # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
     # which conflicts
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Cinker-plugin-lto -Ccodegen-units=1"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Clinker-plugin-lto -Ccodegen-units=1"
     ;;
 kcfi)
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"

@@ -1,0 +1,45 @@
+diff --git a/library/alloc/tests/vec.rs b/library/alloc/tests/vec.rs
+index d44dcfbf673..d3bacbc1586 100644
+--- a/library/alloc/tests/vec.rs
++++ b/library/alloc/tests/vec.rs
+@@ -1636,6 +1636,7 @@ fn test_reserve_exact() {
+ }
+ 
+ #[test]
++#[no_sanitize] // ASAN throws an error for requesting max allocation size
+ #[cfg_attr(miri, ignore)] // Miri does not support signalling OOM
+ #[cfg_attr(target_os = "android", ignore)] // Android used in CI has a broken dlmalloc
+ fn test_try_reserve() {
+diff --git a/library/core/tests/slice.rs b/library/core/tests/slice.rs
+index 865e702b5c2..5efad11a463 100644
+--- a/library/core/tests/slice.rs
++++ b/library/core/tests/slice.rs
+@@ -1876,7 +1876,7 @@ fn sort_unstable() {
+ }
+ 
+ #[test]
+-#[cfg(not(target_arch = "wasm32"))]
++#[cfg(not(any(skip_slow_tests, target_arch = "wasm32")))]
+ #[cfg_attr(miri, ignore)] // Miri is too slow
+ fn select_nth_unstable() {
+     use core::cmp::Ordering::{Equal, Greater, Less};
+@@ -2573,7 +2573,8 @@ macro_rules! empty_max_mut {
+     };
+ }
+ 
+-#[cfg(not(miri))] // Comparing usize::MAX many elements takes forever in Miri (and in rustc without optimizations)
++// Comparing usize::MAX many elements takes forever in Miri (and in rustc without optimizations)
++#[cfg(not(any(miri, skip_slow_tests)))]
+ take_tests! {
+     slice: &[(); usize::MAX], method: take,
+     (take_in_bounds_max_range_to, (..usize::MAX), Some(EMPTY_MAX), &[(); 0]),
+@@ -2581,7 +2582,8 @@ macro_rules! empty_max_mut {
+     (take_in_bounds_max_range_from, (usize::MAX..), Some(&[] as _), EMPTY_MAX),
+ }
+ 
+-#[cfg(not(miri))] // Comparing usize::MAX many elements takes forever in Miri (and in rustc without optimizations)
++// Comparing usize::MAX many elements takes forever in Miri (and in rustc without optimizations)
++#[cfg(not(any(miri, skip_slow_tests)))]
+ take_tests! {
+     slice: &mut [(); usize::MAX], method: take_mut,
+     (take_mut_in_bounds_max_range_to, (..usize::MAX), Some(empty_max_mut!()), &mut [(); 0]),
