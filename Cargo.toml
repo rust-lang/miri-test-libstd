@@ -1,9 +1,10 @@
 [workspace]
-workspace.resolver = "2"
+resolver = "2"
+
 members = [
-  "core_sanity_test",
-  "alloc_sanity_test",
-  "std_sanity_test",
+  "core_run_test",
+  "alloc_run_test",
+  "std_run_test",
 ]
 
 exclude = [

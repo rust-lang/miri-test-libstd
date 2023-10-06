@@ -46,7 +46,9 @@ memtag)
     exit 1
     ;;
 cfi)
-    # cfi needs LTO and 1 CGU...
+    # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
+    # which conflicts
+    RUSTFLAGS=${RUSTFLAGS//-Zrandomize-layout/}
     RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Clto -Ccodegen-units=1"
     ;;
 kcfi)

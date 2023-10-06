@@ -36,5 +36,5 @@ cp "$LIB_SRC/../Cargo.lock" Cargo.lock
 echo "running test with RUSTFLAGS ${RUSTFLAGS}"
 
 # run test
-cd "./${CRATE}_sanity_test"
+cd "./${CRATE}_run_test"
 cargo test "$@"
