@@ -2,7 +2,8 @@
 set -eauxo pipefail
 
 # llvm-symbolizer supports v0 mangling
-RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full -Csymbol-mangling-version=v0 --cfg=skip-slow-tests"
+RUSTFLAGS="-Zrandomize-layout -Cdebuginfo=full -Csymbol-mangling-version=v0 \
+    --cfg skip_slow_tests"
 
 if [ -z "${TARGET+x}" ]; then
     echo "Env TARGET must be set"
@@ -29,7 +30,7 @@ address)
     # FIXME: if on aarch64-{unknown}-linux-{android, gnu}, we can use `hwaddress`
     # instead of `address` which should be faster. Unfortunately we probably
     # don't have that in CI
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=address"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=address --cfg sanitizer=\"address\""
     ;;
 hwaddress)
     # see above
@@ -41,36 +42,38 @@ kasan)
     exit 1
     ;;
 memory)
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memory"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memory --cfg sanitizer=\"memory\""
     ;;
 memtag)
     # FIXME: alternative to MSAN with the same target restrictions as hwaddress
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memtag"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=memtag --cfg sanitizer=\"memory\""
     ecbo "we don't have a CI target for this yet"
     exit 1
     ;;
 cfi)
     # CFI needs LTO and 1CGU, seems like randomize-layout enables `embed-bitcode=no`
     # which conflicts
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi -Cembed-bitcode=yes -Clinker-plugin-lto -Ccodegen-units=1"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=cfi --cfg sanitizer=\"cfi\" \
+        -Cembed-bitcode=yes -Clinker-plugin-lto -Ccodegen-units=1"
     ;;
 kcfi)
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=kcfi --cfg sanitizer=\"cfi\""
     ;;
 safestack)
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=safestack"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=safestack --cfg sanitizer=\"safestack\""
     ;;
 shadow-call-stack)
     # FIXME: aarch64-linux-android only
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=shadow-call-stack"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=shadow-call-stack \
+        --cfg sanitizer=\"shadow-call-stack\""
     echo "we don't have a CI target for this yet"
     exit 1
     ;;
 leak)
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=leak"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=leak --cfg sanitizer=\"leak\""
     ;;
 thread)
-    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=thread"
+    RUSTFLAGS="${RUSTFLAGS} -Zsanitizer=thread --cfg sanitizer=\"thread\""
     ;;
 *)
     echo "unknown sanitizer $2"
