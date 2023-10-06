@@ -20,7 +20,7 @@ rm -rf rust-src-patched-san
 cp -a "$(rustc --print sysroot)/lib/rustlib/src/rust/" rust-src-patched-san
 ( cd rust-src-patched-san && patch -f -p1 < ../rust-src-san.diff  ) ||
     ( echo "Applying rust-src-san.diff failed!" && exit 1 )
-LIB_SRC="$(pwd)/rust-src-patched/library"
+LIB_SRC="$(pwd)/rust-src-patched-san/library"
 export LIB_SRC
 
 echo "SYMBOLIZER: $(which llvm-symbolizer || none)"
