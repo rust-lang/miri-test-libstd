@@ -22,7 +22,7 @@ jobs:
       matrix:
         crate: [core, alloc, std, simd, stdarch]
         sanitizer: [address, memory, thread, cfi, safestack, leak]
-        exclude:
+        # exclude:
           # FIXME: cfi is a mix of lto, bitcode, 1-cgu, and it doesn't seem to
           # even compile
           # - sanitizer: cfi 
