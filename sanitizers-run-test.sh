@@ -37,4 +37,4 @@ echo "running test with RUSTFLAGS ${RUSTFLAGS}"
 
 # run test
 cd "./${CRATE}_run_test"
-cargo test "$@"
+cargo test -vvv "$@"
