@@ -24,7 +24,7 @@ jobs:
         exclude:
           # FIXME can't get this to compile because of conflicts with lto
           # and embed-bitcode
-           sanitizer: cfi 
+           - sanitizer: cfi 
     name: Test ${{ matrix.crate }} with ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     steps:
