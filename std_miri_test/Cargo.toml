@@ -29,6 +29,10 @@ rustc-demangle = { path = "../fake/rustc-demangle" }
 rand = { version = "0.8.5", default-features = false, features = ["alloc"] }
 rand_xorshift = "0.3.0"
 
+[build-dependencies]
+# Dependency of the `backtrace` crate's build script
+cc = "1.0.67"
+
 [features]
 # Empty this crate
 default = ["miri-test-libstd"]
