@@ -14,7 +14,7 @@ case "$1" in
 core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
-    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
+    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64_be-unknown-linux-gnu_ilp32; do
         echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
             ./run-test.sh core --target $TARGET --lib --tests \
@@ -36,7 +36,7 @@ core)
 alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
-    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
+    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64_be-unknown-linux-gnu_ilp32; do
         echo "::group::Testing alloc ($TARGET, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check" \
             ./run-test.sh alloc --target $TARGET --lib --tests \
