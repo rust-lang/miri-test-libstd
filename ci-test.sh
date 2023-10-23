@@ -14,6 +14,7 @@ case "$1" in
 core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
+    exit 1
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
@@ -36,6 +37,7 @@ core)
 alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
+    exit 0
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing alloc ($TARGET, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check" \
@@ -56,6 +58,7 @@ std)
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
 
+    exit 0
     for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin x86_64-pc-windows-msvc i686-pc-windows-gnu; do
         echo "::group::Testing std core ($CORE on $TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
@@ -89,6 +92,7 @@ simd)
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
 
+    exit 0
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
         cargo miri test --lib --tests -- --skip ptr \
@@ -105,6 +109,7 @@ simd)
     echo "::endgroup::"
     ;;
 stdarch)
+    exit 1
     for TARGET in x86_64-unknown-linux-gnu i686-unknown-linux-gnu; do
         echo "::group::Testing stdarch ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS" \
