@@ -19,12 +19,13 @@ export TARGET="$1"
 
 case "$TARGET" in
 i586-*|i686-*|x86_64-*)
-    RUSTFLAGS="-C target-feature=+ssse3"
+    RUSTFLAGS="-C target-feature=+ssse3,+avx512vl,+vaes"
     TEST_ARGS=(
-        core_arch::x86::{sse,sse2,sse3,ssse3}::
+        core_arch::x86::{sse,sse2,sse3,ssse3,aes,vaes}::
         core_arch::x86_64::{sse,sse2}::
         # FIXME not yet implemented
         --skip test_mm_clflush # could be implemented as a no-op?
+        --skip test_mm_aeskeygenassist_si128
     )
     ;;
 *)
