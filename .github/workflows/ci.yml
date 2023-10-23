@@ -65,9 +65,9 @@ jobs:
     # dependencies fails.
     if: always() # make sure this is never "skipped"
     steps:
-      - name: fail if any dependency failed
-        run: exit 1
-        if: failure()
+      # Manually check the status of all dependencies. `if: failure()` does not work.
+      - name: check if any dependency failed
+        run: jq --exit-status 'all(.result == "success")' <<< '${{ toJson(needs) }}'
 
   # Send a Zulip notification when a cron job fails
   cron-fail-notify:
