@@ -1,0 +1,18 @@
+diff --git a/library/core/tests/fmt/num.rs b/library/core/tests/fmt/num.rs
+index 1ddcd5ab795..bc387a46ea7 100644
+--- a/library/core/tests/fmt/num.rs
++++ b/library/core/tests/fmt/num.rs
+@@ -152,8 +152,11 @@ fn test_format_int_exp_precision() {
+     assert_eq!(format!("{:+10.3e}", 1), "  +1.000e0");
+ 
+     // test precision remains correct when rounding to next power
+-
+-    for i in i16::MIN..=i16::MAX {
++    #[cfg(miri)] // can't cover all of `i16` in Miri
++    let range = [i16::MIN, -1, 1, i16::MAX];
++    #[cfg(not(miri))]
++    let range = i16::MIN..=i16::MAX;
++    for i in range {
+         for p in 0..=5 {
+             assert_eq!(
+                 format!("{i:.p$e}"),
