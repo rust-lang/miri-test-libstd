@@ -1,0 +1,88 @@
+diff --git a/library/alloc/src/vec/in_place_collect.rs b/library/alloc/src/vec/in_place_collect.rs
+index e4f96fd7640..cbf209a9090 100644
+--- a/library/alloc/src/vec/in_place_collect.rs
++++ b/library/alloc/src/vec/in_place_collect.rs
+@@ -168,7 +168,7 @@ const fn in_place_collectible<DEST, SRC>(
+     step_merge: Option<NonZeroUsize>,
+     step_expand: Option<NonZeroUsize>,
+ ) -> bool {
+-    if DEST::IS_ZST || mem::align_of::<SRC>() < mem::align_of::<DEST>() {
++    if const { SRC::IS_ZST || DEST::IS_ZST || mem::align_of::<SRC>() < mem::align_of::<DEST>() } {
+         return false;
+     }
+ 
+@@ -186,6 +186,32 @@ const fn in_place_collectible<DEST, SRC>(
+     }
+ }
+ 
++const fn needs_realloc<SRC, DEST>(src_cap: usize, dst_cap: usize) -> bool {
++    if const { mem::align_of::<SRC>() != mem::align_of::<DEST>() } {
++        return true;
++    }
++
++    if const {
++        // examples that may require reallocs unless src/dest capacities turn out to be multiples at runtime
++        // Vec<u8> -> Vec<[u8; 4]>
++        let dst_larger = mem::size_of::<SRC>() < mem::size_of::<DEST>();
++
++        // Vec<[u8; 3]> -> Vec<[u8; 2]>
++        // dest_sz can't actually be 0 since in_place_collectible() checks for that but const eval doesn't know that
++        let dest_sz = mem::size_of::<DEST>();
++        let src_not_multiple_of_dest =
++            dest_sz == 0 || mem::size_of::<SRC>() % mem::size_of::<DEST>() != 0;
++
++        dst_larger || src_not_multiple_of_dest
++    } {
++        return src_cap * mem::size_of::<SRC>() != dst_cap * mem::size_of::<DEST>();
++    }
++
++    // Equal size + alignment won't need a realloc.
++    // src size being an integer multiple of the dest size works too
++    return false;
++}
++
+ /// This provides a shorthand for the source type since local type aliases aren't a thing.
+ #[rustc_specialization_trait]
+ trait InPlaceCollect: SourceIter<Source: AsVecIntoIter> + InPlaceIterable {
+@@ -259,12 +285,7 @@ impl<T, I> SpecFromIter<T, I> for Vec<T>
+         // that wasn't a multiple of the destination type size.
+         // Since the discrepancy should generally be small this should only result in some
+         // bookkeeping updates and no memmove.
+-        if (const {
+-            let src_sz = mem::size_of::<I::Src>();
+-            src_sz > 0 && mem::size_of::<T>() % src_sz != 0
+-        } && src_cap * mem::size_of::<I::Src>() != dst_cap * mem::size_of::<T>())
+-            || const { mem::align_of::<T>() != mem::align_of::<I::Src>() }
+-        {
++        if needs_realloc::<I::Src, T>(src_cap, dst_cap) {
+             let alloc = Global;
+             unsafe {
+                 // The old allocation exists, therefore it must have a valid layout.
+@@ -286,6 +307,8 @@ impl<T, I> SpecFromIter<T, I> for Vec<T>
+                 let Ok(reallocated) = result else { handle_alloc_error(new_layout) };
+                 dst_buf = reallocated.as_ptr() as *mut T;
+             }
++        } else {
++            debug_assert_eq!(src_cap * mem::size_of::<I::Src>(), dst_cap * mem::size_of::<T>());
+         }
+ 
+         mem::forget(dst_guard);
+diff --git a/library/alloc/tests/vec.rs b/library/alloc/tests/vec.rs
+index 81de7085e09..3d3175ba3a9 100644
+--- a/library/alloc/tests/vec.rs
++++ b/library/alloc/tests/vec.rs
+@@ -1213,6 +1213,14 @@ fn assert_in_place_trait<T: InPlaceIterable>(_: &T) {}
+     assert_ne!(src_bytes, sink_bytes);
+     assert_eq!(sink.len(), 2);
+ 
++    let mut src: Vec<[u8; 3]> = Vec::with_capacity(17);
++    src.resize( 8, [0; 3]);
++    let iter = src.into_iter().map(|[a, b, _]| [a, b]);
++    assert_in_place_trait(&iter);
++    let sink: Vec<[u8; 2]> = iter.collect();
++    assert_eq!(sink.len(), 8);
++    assert!(sink.capacity() <= 25);
++
+     let src = vec![[0u8; 4]; 256];
+     let srcptr = src.as_ptr();
+     let iter = src
