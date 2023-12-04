@@ -86,3 +86,13 @@ index 81de7085e09..3d3175ba3a9 100644
      let src = vec![[0u8; 4]; 256];
      let srcptr = src.as_ptr();
      let iter = src
+diff --git a/library/portable-simd/crates/core_simd/tests/pointers.rs b/library/portable-simd/crates/core_simd/tests/pointers.rs
+index a90ff928ced..b9f32d16e01 100644
+--- a/library/portable-simd/crates/core_simd/tests/pointers.rs
++++ b/library/portable-simd/crates/core_simd/tests/pointers.rs
+@@ -1,4 +1,4 @@
+-#![feature(portable_simd, strict_provenance)]
++#![feature(portable_simd, strict_provenance, exposed_provenance)]
+ 
+ use core_simd::simd::{
+     ptr::{SimdConstPtr, SimdMutPtr},
