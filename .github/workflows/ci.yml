@@ -69,6 +69,32 @@ jobs:
       - name: check if any dependency failed
         run: jq --exit-status 'all(.result == "success")' <<< '${{ toJson(needs) }}'
 
+  # Make a PR to update `rust-version` when the cron job succeeds.
+  # The primary reason for this is that Github stops running our cron job
+  # if there is no repo activity for a while, so we use these PRs to generate activity.
+  cron-success-pr:
+    name: automatic rustup PR
+    runs-on: ubuntu-latest
+    needs: [success]
+    if: github.event_name == 'schedule'
+    steps:
+      - name: setup bot git name and email
+        run: |
+          git config --global user.name 'The Miri Conjob Bot'
+          git config --global user.email 'miri@cron.bot'
+      - name: Create PR
+        run: |
+          # Create commit
+          DATE=$(date -u +%Y-%m-%d)
+          echo "nightly-$DATE" > rust-version
+          git commit -am "automatic rustup"
+          # Switch to a PR branch
+          BRANCH="rustup-$DATE"
+          git switch -c $BRANCH
+          git push -u origin $BRANCH
+          # Create PR
+          gh pr create -B master --title 'Automatic Rustup' --body ''
+
   # Send a Zulip notification when a cron job fails
   cron-fail-notify:
     name: cronjob failure notification
