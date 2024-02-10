@@ -101,7 +101,7 @@ jobs:
           git switch -c $BRANCH
           git push -u origin $BRANCH
           # Create PR
-          gh pr create -B master --title 'Automatic Rustup' --body ''
+          gh pr create -B master --title 'Automatic Rustup' --body 'Please close and re-open this PR to trigger CI, then enable auto-merge'
 
   # Send a Zulip notification when a cron job fails
   cron-fail-notify:
