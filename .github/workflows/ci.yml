@@ -6,7 +6,8 @@ on:
   push:
     branches: ['master']
   schedule:
-    - cron: '00 2 * * *' # At 02:00 UTC every day (like rustup-components-history).
+    - cron: '10 2 * * *' # At 02:10 UTC every day (a bit after rustup-components-history).
+    - cron: '20,35,50 9,10 * * *' # for testing
 
 jobs:
   test-core:
