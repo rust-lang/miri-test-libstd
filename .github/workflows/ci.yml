@@ -13,7 +13,7 @@ jobs:
   test-core:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -22,7 +22,7 @@ jobs:
   test-alloc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -31,7 +31,7 @@ jobs:
   test-std:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -40,7 +40,7 @@ jobs:
   test-simd:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -49,7 +49,7 @@ jobs:
   test-stdarch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup environment
         run: bash ./ci-setup.sh
       - name: Test
@@ -79,7 +79,7 @@ jobs:
     needs: [success]
     if: github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup bot git name and email
         run: |
           git config --global user.name 'The Miri Conjob Bot'
