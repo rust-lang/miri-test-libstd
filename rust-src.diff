@@ -33,12 +33,20 @@ diff --git a/crates/std_detect/src/lib.rs b/crates/std_detect/src/lib.rs
 index 19cc0217..d19128c2 100644
 --- a/library/stdarch/crates/std_detect/src/lib.rs
 +++ b/library/stdarch/crates/std_detect/src/lib.rs
-@@ -23,7 +23,7 @@
- // Temporary hack: needed to build against toolchains from before the mass feature renaming.
- // Remove this as soon as the stdarch submodule is updated on nightly.
- #![allow(stable_features)]
+@@ -20,15 +20,8 @@
+ #![cfg_attr(test, allow(unused_imports))]
+ #![no_std]
+ #![allow(internal_features)]
+-// Temporary hack: needed to build against toolchains from before the mass feature renaming.
+-// Remove this as soon as the stdarch submodule is updated on nightly.
+-#![allow(stable_features)]
 -#![cfg_attr(not(feature = "rustc-dep-of-std"), feature(stdsimd))]
-+#![cfg_attr(not(feature = "rustc-dep-of-std"), feature(stdarch_internal))]
  #![cfg_attr(
-     all(
-         any(target_arch = "x86", target_arch = "x86_64"),
+-    all(
+-        any(target_arch = "x86", target_arch = "x86_64"),
+-        feature = "rustc-dep-of-std"
+-    ),
++    any(target_arch = "x86", target_arch = "x86_64"),
+     feature(stdarch_x86_has_cpuid)
+ )]
+ 
