@@ -7,7 +7,7 @@ on:
     branches: ['master']
   schedule:
     - cron: '10 2 * * *' # At 02:10 UTC every day (a bit after rustup-components-history).
-    - cron: '20,35,50 9,10 * * *' # for testing
+    - cron: '20,35,50 12,13 * * *' # for testing
 
 jobs:
   test-core:
@@ -79,6 +79,7 @@ jobs:
     needs: [success]
     if: github.event_name == 'schedule'
     steps:
+      - uses: actions/checkout@v3
       - name: setup bot git name and email
         run: |
           git config --global user.name 'The Miri Conjob Bot'
