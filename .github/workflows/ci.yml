@@ -87,6 +87,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # If this is not the first of the month, stop here.
+          if [[ $(date -u +%d) != "01" ]]; then
+            echo "Only creating PR on the first of each month."
+            exit 0
+          fi
           # Create commit
           DATE=$(date -u +%Y-%m-%d)
           echo "nightly-$DATE" > rust-version
