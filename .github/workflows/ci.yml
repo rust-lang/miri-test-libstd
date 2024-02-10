@@ -7,7 +7,7 @@ on:
     branches: ['master']
   schedule:
     - cron: '10 2 * * *' # At 02:10 UTC every day (a bit after rustup-components-history).
-    - cron: '20,35,50 12,13 * * *' # for testing
+    - cron: '20,35,50 14,15 * * *' # for testing
 
 jobs:
   test-core:
@@ -85,6 +85,8 @@ jobs:
           git config --global user.name 'The Miri Conjob Bot'
           git config --global user.email 'miri@cron.bot'
       - name: Create PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Create commit
           DATE=$(date -u +%Y-%m-%d)
