@@ -3,8 +3,6 @@ name: CI
 on:
   pull_request:
   merge_group:
-  push:
-    branches: ['master']
   schedule:
     - cron: '10 2 * * *' # At 02:10 UTC every day (a bit after rustup-components-history).
     - cron: '20,35,50 14,15 * * *' # for testing
