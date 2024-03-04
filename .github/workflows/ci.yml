@@ -87,7 +87,7 @@ jobs:
         run: |
           # If this is not the first of the month, stop here.
           if [[ $(date -u +%d) != "01" ]]; then
-            echo "Only creating PR on the first of each month."
+            echo "It's not the first of a month, so there will be no PR."
             exit 0
           fi
           # Create commit
