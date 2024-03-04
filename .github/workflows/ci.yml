@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: setup bot git name and email
         run: |
-          git config --global user.name 'The Miri Conjob Bot'
+          git config --global user.name 'The Miri Cronjob Bot'
           git config --global user.email 'miri@cron.bot'
       - name: Create PR
         env:
