@@ -37,4 +37,5 @@ cp "$MIRI_LIB_SRC/../Cargo.lock" Cargo.lock
 
 # run test
 cd ./${CRATE}_miri_test
-cargo miri test "$@"
+cargo miri nextest run "$@"
+cargo miri test --doc "$@"

@@ -20,12 +20,14 @@ export TARGET="$1"
 case "$TARGET" in
 i586-*|i686-*|x86_64-*)
     RUSTFLAGS="-C target-feature=+ssse3,+avx512vl,+vaes"
+    FILTERS=(
+        # FIXME not yet implemented
+        -E "not test(test_mm_clflush" # could be implemented as a no-op?
+        -E "not test(test_mm_aeskeygenassist_si128)"
+    )
     TEST_ARGS=(
         core_arch::x86::{sse,sse2,sse3,ssse3,aes,vaes}::
         core_arch::x86_64::{sse,sse2}::
-        # FIXME not yet implemented
-        --skip test_mm_clflush # could be implemented as a no-op?
-        --skip test_mm_aeskeygenassist_si128
     )
     ;;
 *)
@@ -41,7 +43,12 @@ export STDARCH_TEST_EVERYTHING=1
 export MIRIFLAGS="${MIRIFLAGS:-} -Zmiri-disable-isolation"
 
 cd $MIRI_LIB_SRC/stdarch
-cargo miri test \
+cargo miri nextest run test \
     --target "$TARGET" \
     --manifest-path=crates/core_arch/Cargo.toml \
-    -- "${TEST_ARGS[@]}"
+    "${FILTERS[@]}" -- "${TEST_ARGS[@]}"
+
+cargo miri test --doc \
+    --target "$TARGET" \
+    --manifest-path=crates/core_arch/Cargo.toml \
+    "${FILTERS[@]}" -- "${TEST_ARGS[@]}"

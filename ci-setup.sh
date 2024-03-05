@@ -17,3 +17,5 @@ echo "Installing Rust version: $RUST_TOOLCHAIN"
 rustup toolchain install "$RUST_TOOLCHAIN" --component miri
 rustup override set "$RUST_TOOLCHAIN"
 cargo miri setup
+curl -L https://get.nexte.st/latest/linux | tar zxf -
+mv cargo-nextest ~/.cargo/bin/

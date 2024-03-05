@@ -17,8 +17,7 @@ core)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh core --target $TARGET --lib --tests \
-            -- --skip align \
+            ./run-test.sh core --target $TARGET --lib --tests -E "not test(align)" \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing core ($TARGET)"
@@ -91,11 +90,11 @@ simd)
 
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
-        cargo miri test --lib --tests -- --skip ptr \
+        cargo miri nextest run --lib --tests -E "not test(ptr)" \
         2>&1 | ts -i '%.s  '
     # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-permissive-provenance" \
-        cargo miri test --lib --tests -- ptr \
+        cargo miri nextest run --lib --tests -- ptr \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     echo "::group::Testing portable-simd docs"
