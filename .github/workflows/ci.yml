@@ -116,7 +116,7 @@ jobs:
           ZULIP_BOT_EMAIL: ${{ secrets.ZULIP_BOT_EMAIL }}
           ZULIP_API_TOKEN: ${{ secrets.ZULIP_API_TOKEN }}
         run: |
-          ~/.local/bin/zulip-send --stream miri --subject "Cron Job Failure (miri-test-libstd, $(date -u +%Y-%m))" \
+          ~/.local/bin/zulip-send --stream miri --subject "Miri test-libstd Failure ($(date -u +%Y-%m))" \
             --message 'Dear @*T-miri*,
 
           The standard library test suite is [failing under Miri]('"https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"'). Would you mind investigating this issue?
