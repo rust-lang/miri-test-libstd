@@ -7,23 +7,18 @@ edition = "2021"
 
 [lib]
 name = "alloc_miri_test"
-path = "../library/alloc/src/lib.rs"
-
-[features]
-# Empty this crate to avoid two copies of liballoc.
-# See https://github.com/rust-lang/miri-test-libstd/issues/4.
-default = ["miri-test-libstd"]
-miri-test-libstd = []
-
-[dependencies]
-# This lets the crate access the `core` and `alloc` crates.
-core = { path = "../fake/core" }
-alloc = { path = "../fake/alloc" }
+path = "../empty.rs"
+test = false
+bench = false
 
 [dev-dependencies]
 rand = { version = "0.8.5", default-features = false, features = ["alloc"] }
 rand_xorshift = "0.3.0"
 
 [[test]]
-name = "collectionstests"
+name = "alloc"
+path = "../library/alloc/src/lib.rs"
+
+[[test]]
+name = "alloctests"
 path = "../library/alloc/tests/lib.rs"
