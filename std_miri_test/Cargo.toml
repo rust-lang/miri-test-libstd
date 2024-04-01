@@ -17,7 +17,7 @@ path = "../library/std/src/lib.rs"
 # just a bunch of fake crates that reeexport sysroot crates, so that std's imports work out
 # (this works because we only build std as a test; the regular crate build is
 # completely empty thanks to the `miri-test-libstd` feature below)
-alloc = { path = "../fake/alloc" }
+alloc = { path = "../alloc_miri_test" }
 cfg-if = { path = "../fake/cfg-if" }
 libc = { path = "../fake/libc" }
 hashbrown = { path = "../fake/hashbrown" }

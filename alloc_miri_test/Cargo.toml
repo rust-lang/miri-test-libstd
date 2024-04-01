@@ -1,5 +1,5 @@
 [package]
-name = "alloc_miri_test"
+name = "alloc"
 version = "0.0.0"
 autotests = false
 autobenches = false
@@ -10,9 +10,9 @@ rand = { version = "0.8.5", default-features = false, features = ["alloc"] }
 rand_xorshift = "0.3.0"
 
 [[test]]
-name = "alloc"
+name = "alloc-lib"
 path = "../library/alloc/src/lib.rs"
 
 [[test]]
-name = "alloctests"
+name = "alloc-tests"
 path = "../library/alloc/tests/lib.rs"
