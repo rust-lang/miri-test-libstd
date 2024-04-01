@@ -6,12 +6,6 @@ autotests = false
 autobenches = false
 edition = "2021"
 
-[lib]
-name = "core_miri_test"
-path = "../empty.rs"
-test = false
-bench = false
-
 [[test]]
 name = "coretests"
 path = "../library/core/tests/lib.rs"

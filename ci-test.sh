@@ -17,13 +17,13 @@ core)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh core --target $TARGET --lib --tests \
+            ./run-test.sh core --target $TARGET --tests \
             -- --skip align \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing core ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS" \
-            ./run-test.sh core --target $TARGET --lib --tests \
+            ./run-test.sh core --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing core docs ($TARGET, ignore leaks)" && echo
@@ -39,7 +39,7 @@ alloc)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
         echo "::group::Testing alloc ($TARGET, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh alloc --target $TARGET --lib --tests \
+            ./run-test.sh alloc --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing alloc docs ($TARGET, ignore leaks)"
