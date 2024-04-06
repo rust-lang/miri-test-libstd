@@ -11,6 +11,21 @@ index 638f343fb24..0561f49c967 100644
  #![feature(btree_extract_if)]
  #![feature(iter_next_chunk)]
  #![feature(repr_simd)]
+diff --git a/library/alloc/src/sync.rs b/library/alloc/src/sync.rs
+index 4dea27221b7..6ae52cc7827 100644
+--- a/library/alloc/src/sync.rs
++++ b/library/alloc/src/sync.rs
+@@ -1062,7 +1062,9 @@ pub fn try_unwrap(this: Self) -> Result<T, Self> {
+     ///
+     /// // Create a long list and clone it
+     /// let mut x = LinkedList::new();
+-    /// for i in 0..100000 {
++    /// let size = 100000;
++    /// # let size = if cfg!(miri) { 100 } else { size };
++    /// for i in 0..size {
+     ///     x.push(i); // Adds i to the front of x
+     /// }
+     /// let y = x.clone();
 diff --git a/library/core/benches/lib.rs b/library/core/benches/lib.rs
 index 4d14b930e41..32d15c386cb 100644
 --- a/library/core/benches/lib.rs
@@ -55,3 +70,17 @@ index 27f3e8a9b96..a80f24fcb19 100644
  
  use std::fs::File;
  use std::io::{Read, Write};
+diff --git a/library/std/tests/thread.rs b/library/std/tests/thread.rs
+index 4ce81f2846e..79a981d0b0d 100644
+--- a/library/std/tests/thread.rs
++++ b/library/std/tests/thread.rs
+@@ -5,7 +5,8 @@
+ 
+ #[test]
+ #[cfg_attr(target_os = "emscripten", ignore)]
+-fn sleep() {
++#[cfg_attr(miri, ignore)] // Miri does not like the thread leak
++fn sleep_very_long() {
+     let finished = Arc::new(Mutex::new(false));
+     let t_finished = finished.clone();
+     thread::spawn(move || {

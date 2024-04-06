@@ -70,9 +70,9 @@ std)
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
-    # "sleep" has a thread leak that we have to ignore
+    # Test the remaining modules only on Linux.
     echo "::group::Testing remaining std (all except for $SKIP, ignore leaks)"
-    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
         ./run-test.sh std --lib --tests \
         -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
         2>&1 | ts -i '%.s  '
