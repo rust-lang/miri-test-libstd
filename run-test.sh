@@ -35,6 +35,10 @@ ln -s "$MIRI_LIB_SRC" library
 # use the rust-src lockfile
 cp "$MIRI_LIB_SRC/../Cargo.lock" Cargo.lock
 
+# This ensures that the "core" crate being built as part of `cargo miri test`
+# is just a re-export of the sysroot crate, so we don't get duplicate lang items.
+export MIRI_REPLACE_LIBRS_IF_NOT_TEST=1
+
 # run test
-cd ./${CRATE}_miri_test
-cargo miri test "$@"
+export CARGO_TARGET_DIR=$(pwd)/target
+cargo miri test --manifest-path "library/$CRATE/Cargo.toml" "$@"

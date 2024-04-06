@@ -1,0 +1,57 @@
+diff --git a/library/alloc/benches/lib.rs b/library/alloc/benches/lib.rs
+index 638f343fb24..0561f49c967 100644
+--- a/library/alloc/benches/lib.rs
++++ b/library/alloc/benches/lib.rs
+@@ -1,6 +1,8 @@
+ // Disabling on android for the time being
+ // See https://github.com/rust-lang/rust/issues/73535#event-3477699747
+ #![cfg(not(target_os = "android"))]
++// Disabling in Miri as these would take too long.
++#![cfg(not(miri))]
+ #![feature(btree_extract_if)]
+ #![feature(iter_next_chunk)]
+ #![feature(repr_simd)]
+diff --git a/library/core/benches/lib.rs b/library/core/benches/lib.rs
+index 4d14b930e41..32d15c386cb 100644
+--- a/library/core/benches/lib.rs
++++ b/library/core/benches/lib.rs
+@@ -1,5 +1,7 @@
+ // wasm32 does not support benches (no time).
+ #![cfg(not(target_arch = "wasm32"))]
++// Disabling in Miri as these would take too long.
++#![cfg(not(miri))]
+ #![feature(flt2dec)]
+ #![feature(test)]
+ #![feature(trusted_random_access)]
+diff --git a/library/std/benches/lib.rs b/library/std/benches/lib.rs
+index 4d1cf7fab7b..1b21c230a0b 100644
+--- a/library/std/benches/lib.rs
++++ b/library/std/benches/lib.rs
+@@ -1,3 +1,5 @@
++// Disabling in Miri as these would take too long.
++#![cfg(not(miri))]
+ #![feature(test)]
+ 
+ extern crate test;
+diff --git a/library/std/tests/process_spawning.rs b/library/std/tests/process_spawning.rs
+index 59f67f9901f..2b7997299c5 100644
+--- a/library/std/tests/process_spawning.rs
++++ b/library/std/tests/process_spawning.rs
+@@ -1,4 +1,6 @@
+ #![cfg(not(target_env = "sgx"))]
++// Process spawning does not work in Miri.
++#![cfg(not(miri))]
+ 
+ use std::env;
+ use std::fs;
+diff --git a/library/std/tests/switch-stdout.rs b/library/std/tests/switch-stdout.rs
+index 27f3e8a9b96..a80f24fcb19 100644
+--- a/library/std/tests/switch-stdout.rs
++++ b/library/std/tests/switch-stdout.rs
+@@ -1,4 +1,6 @@
+ #![cfg(any(target_family = "unix", target_family = "windows"))]
++// Calls functions that are not supported by Miri.
++#![cfg(not(miri))]
+ 
+ use std::fs::File;
+ use std::io::{Read, Write};
