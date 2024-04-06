@@ -6,7 +6,7 @@ set -euo pipefail
 ## Usage:
 ##   ./run-test.sh TARGET
 ## Environment variables:
-##   MIRI_LIB_SRC: The path to the Rust library directory (`library`).
+##   MIRI_LIB_SRC: The path to the Rust `library` directory (optional).
 ##   RUSTFLAGS: rustc flags (optional)
 ##   MIRIFLAGS: Miri flags (optional)
 
@@ -40,8 +40,11 @@ export STDARCH_TEST_EVERYTHING=1
 # Needed to pass the STDARCH_TEST_EVERYTHING environment variable
 export MIRIFLAGS="${MIRIFLAGS:-} -Zmiri-disable-isolation"
 
-cd $MIRI_LIB_SRC/stdarch
+# Set library source dir
+export MIRI_LIB_SRC=${MIRI_LIB_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/library}
+
+export CARGO_TARGET_DIR=$(pwd)/target
 cargo miri test \
+    --manifest-path=$MIRI_LIB_SRC/stdarch/crates/core_arch/Cargo.toml \
     --target "$TARGET" \
-    --manifest-path=crates/core_arch/Cargo.toml \
     -- "${TEST_ARGS[@]}"

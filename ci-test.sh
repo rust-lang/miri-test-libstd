@@ -85,9 +85,10 @@ std)
     echo "::endgroup::"
     ;;
 simd)
-    cd $MIRI_LIB_SRC/portable-simd
+    export CARGO_TARGET_DIR=$(pwd)/target
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
+    cd $MIRI_LIB_SRC/portable-simd
 
     echo "::group::Testing portable-simd"
     MIRIFLAGS="$DEFAULTFLAGS" \
