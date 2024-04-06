@@ -51,7 +51,7 @@ alloc)
     ;;
 std)
     # Modules that we skip entirely, because they need a lot of shims we don't support.
-    SKIP="fs:: net:: process:: sys:: sys_common::net::"
+    SKIP="fs:: net:: process:: sys::pal::"
     # Core modules, that we are testing on a bunch of targets.
     # These are the most OS-specific (among the modules we do not skip).
     CORE="time:: sync:: thread:: env::"
