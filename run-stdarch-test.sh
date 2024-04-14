@@ -4,7 +4,7 @@ set -euo pipefail
 ## Run stdarch test suite with Miri.
 ## Assumes Miri to be installed.
 ## Usage:
-##   ./run-test.sh TARGET
+##   ./run-stdarch-test.sh TARGET
 ## Environment variables:
 ##   MIRI_LIB_SRC: The path to the Rust `library` directory (optional).
 ##   RUSTFLAGS: rustc flags (optional)
@@ -19,7 +19,7 @@ export TARGET="$1"
 
 case "$TARGET" in
 i586-*|i686-*|x86_64-*)
-    RUSTFLAGS="-C target-feature=+ssse3,+avx512vl,+vaes"
+    TARGET_RUSTFLAGS="-C target-feature=+ssse3,+avx512vl,+vaes"
     TEST_ARGS=(
         core_arch::x86::{sse,sse2,sse3,ssse3,aes,vaes}::
         core_arch::x86_64::{sse,sse2}::
@@ -33,7 +33,7 @@ i586-*|i686-*|x86_64-*)
     exit 1
 esac
 
-export RUSTFLAGS="${RUSTFLAGS:-} -Ainternal_features"
+export RUSTFLAGS="${RUSTFLAGS:-} $TARGET_RUSTFLAGS -Ainternal_features"
 
 # Make sure all tested target features are enabled
 export STDARCH_TEST_EVERYTHING=1
