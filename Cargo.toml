@@ -2,6 +2,8 @@
 # `./run-test.sh` makes the `library` folder a symlink to the right place.
 # (Somehow, directly building things from `rustlib/src` does not work...)
 [workspace]
+resolver = "1"
+
 members = [
   "library/std",
   "library/sysroot",
