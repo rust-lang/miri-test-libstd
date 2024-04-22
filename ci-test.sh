@@ -50,39 +50,26 @@ alloc)
     done
     ;;
 std)
-    # Modules that we skip entirely, because they need a lot of shims we don't support.
+    # Modules that we skip because they need a lot of shims we don't support.
     SKIP="fs:: net:: process:: sys::pal::"
-    # Core modules, that we are testing on a bunch of targets.
-    # These are the most OS-specific (among the modules we do not skip).
-    CORE="time:: sync:: thread:: env::"
 
-    for TARGET in x86_64-unknown-linux-gnu aarch64-apple-darwin x86_64-pc-windows-msvc i686-pc-windows-gnu; do
-        echo "::group::Testing std core ($CORE on $TARGET)"
+    # A 64bit little-endian and a 32bit big-endian target,
+    # as well as targets covering all major OSes and both ABIs on Windows.
+    # rustc itself tests i686-pc-windows-msvc so we test the other.
+    for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64-apple-darwin i686-pc-windows-gnu x86_64-pc-windows-msvc; do
+        echo "::group::Testing std ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --lib --tests \
-            -- $CORE \
+            -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std core docs ($CORE on $TARGET, ignore leaks)"
+        echo "::group::Testing std docs ($TARGET, ignore leaks)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
-            -- $CORE \
+            -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
     done
-    # Test the remaining modules only on Linux.
-    echo "::group::Testing remaining std (all except for $SKIP, ignore leaks)"
-    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
-        ./run-test.sh std --lib --tests \
-        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
-        2>&1 | ts -i '%.s  '
-    echo "::endgroup::"
-    echo "::group::Testing remaining std docs (all except for $SKIP, ignore leaks)"
-    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
-        ./run-test.sh std --doc \
-        -- $(for M in $CORE; do echo "--skip $M "; done) $(for M in $SKIP; do echo "--skip $M "; done) \
-        2>&1 | ts -i '%.s  '
-    echo "::endgroup::"
     ;;
 simd)
     export CARGO_TARGET_DIR=$(pwd)/target
