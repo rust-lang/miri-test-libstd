@@ -36,9 +36,7 @@ esac
 export RUSTFLAGS="${RUSTFLAGS:-} $TARGET_RUSTFLAGS -Ainternal_features"
 
 # Make sure all tested target features are enabled
-export STDARCH_TEST_EVERYTHING=1
-# Needed to pass the STDARCH_TEST_EVERYTHING environment variable
-export MIRIFLAGS="${MIRIFLAGS:-} -Zmiri-disable-isolation"
+export MIRIFLAGS="${MIRIFLAGS:-} -Zmiri-env-set=STDARCH_TEST_EVERYTHING=1"
 
 # Set library source dir
 export MIRI_LIB_SRC=${MIRI_LIB_SRC:-$(rustc --print sysroot)/lib/rustlib/src/rust/library}
