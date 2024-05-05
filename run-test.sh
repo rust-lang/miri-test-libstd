@@ -39,6 +39,11 @@ cp "$MIRI_LIB_SRC/../Cargo.lock" Cargo.lock
 # is just a re-export of the sysroot crate, so we don't get duplicate lang items.
 export MIRI_REPLACE_LIBRS_IF_NOT_TEST=1
 
+# core and std contain some modules that are also crates, so the feature flags are a bit all over
+# the place and we disable feature flag checking. (This matches what bootstrap does.)
+export RUSTFLAGS="--check-cfg=cfg(feature,values(any())) ${RUSTFLAGS:-}"
+export RUSTDOCFLAGS="--check-cfg=cfg(feature,values(any())) ${RUSTDOCFLAGS:-}"
+
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
 cargo miri test --manifest-path "library/$CRATE/Cargo.toml" "$@"
