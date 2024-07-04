@@ -9,14 +9,20 @@ Every night, a CI cron job runs the tests against the latest nightly, to make su
 To run the tests yourself, make sure you have Miri installed (`rustup component add miri`) and then run:
 
 ```shell
+# Unit tests and integration tests
 ./run-test.sh core --lib --tests
 ./run-test.sh alloc --lib --tests
-MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std --lib --tests -- time::
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std --lib --tests -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
+# Doc tests
+MIRIFLAGS="-Zmiri-ignore-leaks" ./run-test.sh core --doc
+MIRIFLAGS="-Zmiri-ignore-leaks" ./run-test.sh alloc --doc
+MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" ./run-test.sh std --doc -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
 ```
 
 This will run the test suite of the standard library of your current toolchain.
-`--lib --tests` means that doc tests are skipped; those should use separate Miri flags as there are some (expected) memory leaks.
-Use `--doc` to run only doc tests.
+It will probably take 1-2h, so if you have specific parts of the standard library you want to test, use the usual `cargo test` filter mechanisms to narrow this down:
+all arguments are passed to `cargo test`, so arguments after `--` are passed to the test runner as usual.
+Doc tests have to be run separately as there are some (expected) memory leaks.
 For `std`, we cannot run *all* tests since they will use networking and file system APIs that we do not support.
 
 If you are working on the standard library and want to check that the tests pass with your modifications, set `MIRI_LIB_SRC` to the `library` folder of the checkout you are working in:
@@ -29,13 +35,6 @@ Here, `~/path/to/rustc` should be the directory containing `x.py`.
 Then the test suite will be compiled from the standard library in that directory.
 Make sure that is as close to your rustup default toolchain as possible, as the toolchain will still be used to build that standard library and its test suite.
 If you are getting strange build errors, `cargo clean` can often fix that.
-
-`run-test` also accepts parameters that are passed to `cargo test` and the test runner,
-and `MIRIFLAGS` can be used as usual to pass parameters to Miri:
-
-```shell
-MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" ./run-test.sh alloc --doc -- --skip vec
-```
 
 If you want to know how long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command,
 or use the test flags `-Zunstable-options --report-time` (the latter option also requires `-Zmiri-disable-isolation` in the Miri flags).
