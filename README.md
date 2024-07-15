@@ -9,26 +9,21 @@ Every night, a CI cron job runs the tests against the latest nightly, to make su
 To run the tests yourself, make sure you have Miri installed (`rustup component add miri`) and then run:
 
 ```shell
-# Unit tests and integration tests
-./run-test.sh core --lib --tests
-./run-test.sh alloc --lib --tests
-MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std --lib --tests -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
-# Doc tests
-MIRIFLAGS="-Zmiri-ignore-leaks" ./run-test.sh core --doc
-MIRIFLAGS="-Zmiri-ignore-leaks" ./run-test.sh alloc --doc
-MIRIFLAGS="-Zmiri-ignore-leaks -Zmiri-disable-isolation" ./run-test.sh std --doc -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh core
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh alloc
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
 ```
 
 This will run the test suite of the standard library of your current toolchain.
 It will probably take 1-2h, so if you have specific parts of the standard library you want to test, use the usual `cargo test` filter mechanisms to narrow this down:
 all arguments are passed to `cargo test`, so arguments after `--` are passed to the test runner as usual.
-Doc tests have to be run separately as there are some (expected) memory leaks.
+Isolation is disabled as even in `core`, some doctests use file system accesses for demonstration purposes.
 For `std`, we cannot run *all* tests since they will use networking and file system APIs that we do not support.
 
 If you are working on the standard library and want to check that the tests pass with your modifications, set `MIRI_LIB_SRC` to the `library` folder of the checkout you are working in:
 
 ```shell
-MIRI_LIB_SRC=~/path/to/rustc/library ./run-test.sh core --lib --tests
+MIRI_LIB_SRC=~/path/to/rustc/library ./run-test.sh core -- test_name
 ```
 
 Here, `~/path/to/rustc` should be the directory containing `x.py`.

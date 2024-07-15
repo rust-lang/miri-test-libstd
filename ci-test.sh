@@ -26,8 +26,8 @@ core)
             ./run-test.sh core --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing core docs ($TARGET, ignore leaks)" && echo
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+        echo "::group::Testing core docs ($TARGET)" && echo
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
@@ -42,8 +42,8 @@ alloc)
             ./run-test.sh alloc --target $TARGET --lib --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing alloc docs ($TARGET, ignore leaks)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+        echo "::group::Testing alloc docs ($TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh alloc --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
@@ -63,8 +63,8 @@ std)
             -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std docs ($TARGET, ignore leaks)"
-        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-ignore-leaks -Zmiri-disable-isolation" \
+        echo "::group::Testing std docs ($TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
             -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
