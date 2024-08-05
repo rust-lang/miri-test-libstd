@@ -26,6 +26,7 @@ i586-*|i686-*|x86_64-*)
         # FIXME not yet implemented
         --skip test_mm_clflush # could be implemented as a no-op?
         --skip test_mm_aeskeygenassist_si128
+        --skip _stream # non-temporal stores are using inline assembly
     )
     ;;
 *)
