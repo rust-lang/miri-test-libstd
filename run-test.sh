@@ -39,6 +39,10 @@ cp "$MIRI_LIB_SRC/Cargo.lock" Cargo.lock
 # is just a re-export of the sysroot crate, so we don't get duplicate lang items.
 export MIRI_REPLACE_LIBRS_IF_NOT_TEST=1
 
+# Set the right rustflags.
+export RUSTFLAGS="${RUSTFLAGS:-} -Zforce-unstable-if-unmarked"
+export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Zforce-unstable-if-unmarked"
+
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
 cargo miri test --manifest-path "library/$CRATE/Cargo.toml" "$@"
