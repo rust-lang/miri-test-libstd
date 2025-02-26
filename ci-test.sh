@@ -18,6 +18,7 @@ core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
+        # There are no library tests in core, and the integration tests are in a separate crate.
         echo "::group::Testing coretests ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
             ./run-test.sh coretests --target $TARGET --tests \
