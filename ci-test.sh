@@ -18,15 +18,15 @@ core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing core ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
+        echo "::group::Testing coretests ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh core --target $TARGET --tests \
+            ./run-test.sh coretests --target $TARGET --tests \
             -- --skip align \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing core ($TARGET)"
+        echo "::group::Testing coretests ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS" \
-            ./run-test.sh core --target $TARGET --tests \
+            ./run-test.sh coretests --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing core docs ($TARGET)" && echo
