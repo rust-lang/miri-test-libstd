@@ -4,7 +4,7 @@ set -euo pipefail
 DEFAULTFLAGS="-Zrandomize-layout -Zmiri-strict-provenance"
 
 # make sure we keep using the current toolchain even in subdirs that have a toolchain file
-export RUSTUP_TOOLCHAIN=$(rustup show active-toolchain | cut -f 1 -d' ')
+export RUSTUP_TOOLCHAIN=$(rustup show active-toolchain | head -n1 | cut -f 1 -d' ')
 
 # apply our patch
 rm -rf rust-src-patched
