@@ -41,9 +41,9 @@ alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing alloc ($TARGET, symbolic alignment)"
+        echo "::group::Testing alloctests ($TARGET, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh alloc --target $TARGET --lib --tests \
+            ./run-test.sh alloctests --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
         echo "::group::Testing alloc docs ($TARGET)"
