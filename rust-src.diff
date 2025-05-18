@@ -1,0 +1,12 @@
+diff --git a/library/std/src/io/mod.rs b/library/std/src/io/mod.rs
+index 96fac4f6bde..fbb3ea603ab 100644
+--- a/library/std/src/io/mod.rs
++++ b/library/std/src/io/mod.rs
+@@ -2335,6 +2335,7 @@ pub trait BufRead: Read {
+     /// #![feature(buf_read_has_data_left)]
+     /// use std::io;
+     /// use std::io::prelude::*;
++    /// # if cfg!(all(miri, windows)) { return Ok(()); } // FIXME(miri-windows-file-access)
+     ///
+     /// let stdin = io::stdin();
+     /// let mut stdin = stdin.lock();
