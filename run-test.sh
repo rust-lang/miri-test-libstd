@@ -39,9 +39,13 @@ cp "$MIRI_LIB_SRC/Cargo.lock" Cargo.lock
 # is just a re-export of the sysroot crate, so we don't get duplicate lang items.
 export MIRI_REPLACE_LIBRS_IF_NOT_TEST=1
 
-# Set the right rustflags.
-export RUSTFLAGS="${RUSTFLAGS:-} -Zforce-unstable-if-unmarked"
-export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Zforce-unstable-if-unmarked"
+# Set the right rustflags (this matches the rustc-build-sysroot defaults):
+# - `-Zforce-unstable-if-unmarked`` is always needed for sysroot builds
+# - `-Aunexpected_cfgs` since we do not want to be in the business of debugging unexpected_cfgs for
+#   the sysroot
+EXTRAFLAGS="-Zforce-unstable-if-unmarked -Aunexpected_cfgs"
+export RUSTFLAGS="${RUSTFLAGS:-} $EXTRAFLAGS"
+export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $EXTRAFLAGS"
 
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
