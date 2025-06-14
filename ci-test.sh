@@ -82,7 +82,8 @@ simd)
     cd $MIRI_LIB_SRC/portable-simd
 
     echo "::group::Testing portable-simd"
-    MIRIFLAGS="$DEFAULTFLAGS" \
+    # FIXME: disabling float non-determinism due to <https://github.com/rust-lang/portable-simd/issues/463>.
+    MIRIFLAGS="$DEFAULTFLAGS -Zmiri-deterministic-floats" \
         cargo miri test --lib --tests -- --skip ptr \
         2>&1 | ts -i '%.s  '
     # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
