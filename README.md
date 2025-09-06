@@ -11,7 +11,7 @@ To run the tests yourself, make sure you have Miri installed (`rustup component 
 ```shell
 MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh core
 MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh alloc
-MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std -- --skip fs:: --skip net:: --skip process:: --skip sys::pal::
+MIRIFLAGS="-Zmiri-disable-isolation" ./run-test.sh std -- --skip fs:: --skip net:: --skip process:: --skip sys::
 ```
 
 This will run the test suite of the standard library of your current toolchain.
