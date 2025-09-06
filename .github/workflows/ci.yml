@@ -91,9 +91,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # If this is not the first of the month, stop here.
-          if [[ $(date -u +%d) != "01" ]]; then
-            echo "It's not the first of a month, so there will be no PR."
+          # If the `rust-version` file already has the right month, stop here
+          if grep -q "nightly-$(date -u +%Y-%m)" rust-version; then
+            echo "`rust-version` is already reasonably up-to-date, so there will be no PR."
             exit 0
           fi
           # Create commit
