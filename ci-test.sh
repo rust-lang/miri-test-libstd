@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+rustc gamma.rs && ./gamma
+exit 1
+
 DEFAULTFLAGS="-Zrandomize-layout -Zmiri-strict-provenance"
 
 # make sure we keep using the current toolchain even in subdirs that have a toolchain file
