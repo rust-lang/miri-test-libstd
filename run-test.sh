@@ -24,16 +24,6 @@ if ! test -d "$MIRI_LIB_SRC/core"; then
     echo "Set MIRI_LIB_SRC to the Rust source directory, or install the rust-src component."
     exit 1
 fi
-# macOS does not have a useful readlink/realpath so we have to use Python instead...
-MIRI_LIB_SRC=$(python -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$MIRI_LIB_SRC")
-export MIRI_LIB_SRC
-
-# update symlink
-rm -f library
-ln -s "$MIRI_LIB_SRC" library
-
-# use the rust-src lockfile
-cp "$MIRI_LIB_SRC/Cargo.lock" Cargo.lock
 
 # This ensures that the "core" crate being built as part of `cargo miri test`
 # is just a re-export of the sysroot crate, so we don't get duplicate lang items.
@@ -49,4 +39,4 @@ export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $EXTRAFLAGS"
 
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
-cargo miri test --manifest-path "library/$CRATE/Cargo.toml" "$@"
+cargo miri test --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
