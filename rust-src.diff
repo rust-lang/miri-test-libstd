@@ -1,0 +1,14 @@
+diff --git a/library/core/src/mem/maybe_dangling.rs b/library/core/src/mem/maybe_dangling.rs
+index 3a8af8cc7bd..3c5437757e9 100644
+--- a/library/core/src/mem/maybe_dangling.rs
++++ b/library/core/src/mem/maybe_dangling.rs
+@@ -36,7 +36,8 @@
+ ///
+ /// To fix this we could use `MaybeDangling`:
+ ///
+-/// ```rust
++// FIXME: remove `no_run` once the semantics are actually implemented
++/// ```rust,no_run
+ /// #![feature(maybe_dangling, box_as_ptr)]
+ /// # use std::alloc::{dealloc, Layout};
+ /// # use std::mem::{self, MaybeDangling};
