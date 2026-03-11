@@ -63,7 +63,7 @@ std)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64-apple-darwin i686-pc-windows-gnu x86_64-pc-windows-msvc; do
         echo "::group::Testing std ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
-            ./run-test.sh std --target $TARGET --lib --tests \
+            ./run-test.sh std --target $TARGET --tests \
             -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
@@ -84,11 +84,11 @@ simd)
     echo "::group::Testing portable-simd"
     # FIXME: disabling float non-determinism due to <https://github.com/rust-lang/portable-simd/issues/463>.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-deterministic-floats" \
-        cargo miri test --lib --tests -- --skip ptr \
+        cargo miri test --tests -- --skip ptr \
         2>&1 | ts -i '%.s  '
     # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-permissive-provenance" \
-        cargo miri test --lib --tests -- ptr \
+        cargo miri test --tests -- ptr \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     echo "::group::Testing portable-simd docs"
