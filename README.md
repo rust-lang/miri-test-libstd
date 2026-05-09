@@ -33,3 +33,6 @@ If you are getting strange build errors, `cargo clean` can often fix that.
 
 If you want to know how long each test took to execute, add `2>&1 | ts -m -i '%.s  '` to the end of the command,
 or use the test flags `-Zunstable-options --report-time` (the latter option also requires `-Zmiri-disable-isolation` in the Miri flags).
+
+You can also tell `run-test.sh` to use nextest by setting `USE_NEXTEST=1`.
+Note however that this will be a lot [slower](https://github.com/rust-lang/miri/issues/5013) than regular test execution.

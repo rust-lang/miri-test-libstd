@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+# Miri flags we apply everywhere
 DEFAULTFLAGS="-Zrandomize-layout -Zmiri-strict-provenance"
 
 # make sure we keep using the current toolchain even in subdirs that have a toolchain file
@@ -11,6 +12,9 @@ rm -rf rust-src-patched
 cp -a $(rustc --print sysroot)/lib/rustlib/src/rust/ rust-src-patched
 ( cd rust-src-patched && patch -f -p1 < ../rust-src.diff >/dev/null ) || ( echo "Applying rust-src.diff failed!" && exit 1 )
 export MIRI_LIB_SRC=$(pwd)/rust-src-patched/library
+
+# We're not using nextest as that's very slow due to
+# <https://github.com/rust-lang/miri/issues/5013>.
 
 # run the tests (some also without validation, to exercise those code paths in Miri)
 case "$1" in
