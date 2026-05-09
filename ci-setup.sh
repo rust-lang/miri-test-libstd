@@ -7,7 +7,7 @@ set -euo pipefail
 sudo apt-get -y install moreutils
 echo
 
-# And of course we need Rust
+# And of course we need Rust with Miri
 if [[ "$GITHUB_EVENT_NAME" == 'schedule' ]]; then
     RUST_TOOLCHAIN=nightly
 else

@@ -9,6 +9,7 @@ set -euo pipefail
 ## Environment variables:
 ##   MIRI_LIB_SRC: The path to the Rust library directory (`library`).
 ##     Defaults to `$(rustc --print sysroot)/lib/rustlib/src/rust/library`.
+##   USE_NEXTEST: If non-empty, run `cargo miri nextest run` instead of `cargo miri test`.
 
 CRATE=${1:-}
 if [[ -z "$CRATE" ]]; then
@@ -39,4 +40,8 @@ export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $EXTRAFLAGS"
 
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
-cargo miri test --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+if [[ -z "${USE_NEXTEST:-}" ]]; then
+    cargo miri test --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+else
+    cargo miri nextest run --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+fi
