@@ -83,21 +83,21 @@ simd)
     export CARGO_TARGET_DIR=$(pwd)/target
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
-    cd $MIRI_LIB_SRC/portable-simd
+    MANIFEST="$MIRI_LIB_SRC/portable-simd/Cargo.toml"
 
     echo "::group::Testing portable-simd"
     # FIXME: disabling float non-determinism due to <https://github.com/rust-lang/portable-simd/issues/463>.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-deterministic-floats" \
-        cargo miri test --tests -- --skip ptr \
+        cargo miri test --manifest-path "$MANIFEST" --tests -- --skip ptr \
         2>&1 | ts -i '%.s  '
     # This contains some pointer tests that do int/ptr casts, so we need permissive provenance.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-permissive-provenance" \
-        cargo miri test --tests -- ptr \
+        cargo miri test --manifest-path "$MANIFEST" --tests -- ptr \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     echo "::group::Testing portable-simd docs"
     MIRIFLAGS="$DEFAULTFLAGS" \
-        cargo miri test --doc \
+        cargo miri test --manifest-path "$MANIFEST" --doc \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
     ;;
