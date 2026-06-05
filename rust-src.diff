@@ -35,7 +35,7 @@ index 00aeb70e6e0..6e052a34069 100644
 +// Things too easily get mixed up and then we end up with memory leaks because we're not calling
 +// all the right dtors.
 +#[cfg(test)]
-+pub use realstd::thread::local_impl;
++pub use realstd::thread::local_impl; abc!
 +#[cfg(test)]
 +pub use realstd::thread::{AccessError, LocalKey};
  
