@@ -34,6 +34,18 @@ jobs:
       - name: Test
         run: bash ./ci-test.sh std
 
+  test-std-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup environment
+        run: bash ./ci-setup.sh
+      - name: Install nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
+      - name: Test
+        run: bash ./ci-test.sh std-all
+
   test-simd:
     runs-on: ubuntu-latest
     steps:
@@ -55,6 +67,7 @@ jobs:
   # One job that "summarizes" the success state of this pipeline. This can then be added to branch
   # protection, rather than having to add each job separately.
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+  # (Except for test-std-all which we allow to fail.)
   success:
     name: Success
     runs-on: ubuntu-latest
