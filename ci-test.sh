@@ -59,7 +59,7 @@ alloc)
     ;;
 std)
     # Modules that we skip because they need a lot of shims we don't support.
-    SKIP="fs:: net:: process:: sys::"
+    SKIP="fs:: net:: process:: sys:: os::windows::"
 
     # A 64bit little-endian and a 32bit big-endian target,
     # as well as targets covering all major OSes and both ABIs on Windows.
