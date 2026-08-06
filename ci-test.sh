@@ -89,9 +89,9 @@ std-all)
         ./run-test.sh std --no-fail-fast --doc -- fs:: net:: process:: sys:: || true
     ;;
 simd)
-    export CARGO_TARGET_DIR=$(pwd)/target
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
     export RUSTDOCFLAGS="-Ainternal_features ${RUSTDOCFLAGS:-}"
+    export CARGO_TARGET_DIR=$(pwd)/target
     MANIFEST="$MIRI_LIB_SRC/portable-simd/Cargo.toml"
 
     echo "::group::Testing portable-simd"
@@ -104,11 +104,7 @@ simd)
         cargo miri test --manifest-path "$MANIFEST" --tests -- ptr \
         2>&1 | ts -i '%.s  '
     echo "::endgroup::"
-    echo "::group::Testing portable-simd docs"
-    MIRIFLAGS="$DEFAULTFLAGS" \
-        cargo miri test --manifest-path "$MANIFEST" --doc \
-        2>&1 | ts -i '%.s  '
-    echo "::endgroup::"
+    # No need to run the doc tests: they are included in libcore.
     ;;
 stdarch)
     for TARGET in x86_64-unknown-linux-gnu i686-unknown-linux-gnu; do
