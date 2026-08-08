@@ -22,19 +22,18 @@ core)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is totally pointless for core.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        # There are no library tests in core, and the integration tests are in a separate crate.
-        echo "::group::Testing coretests ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
+        echo "::group::./run-test core --tests ($TARGET, no validation, no Stacked Borrows, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-validation -Zmiri-disable-stacked-borrows -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh coretests --target $TARGET --tests \
+            ./run-test.sh core --target $TARGET --tests \
             -- --skip align \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing coretests ($TARGET)"
+        echo "::group::./run-test core --tests ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS" \
-            ./run-test.sh coretests --target $TARGET --tests \
+            ./run-test.sh core --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing core docs ($TARGET)" && echo
+        echo "::group::./run-test core --doc ($TARGET)" && echo
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh core --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
@@ -45,12 +44,12 @@ alloc)
     # A 64bit little-endian and a 32bit big-endian target.
     # (Varying the OS is not really worth it for alloc.)
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu; do
-        echo "::group::Testing alloctests ($TARGET, symbolic alignment)"
+        echo "::group::./run-test alloc --tests ($TARGET, symbolic alignment)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-symbolic-alignment-check" \
-            ./run-test.sh alloctests --target $TARGET --tests \
+            ./run-test.sh alloc --target $TARGET --tests \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing alloc docs ($TARGET)"
+        echo "::group::./run-test alloc --doc ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh alloc --target $TARGET --doc \
             2>&1 | ts -i '%.s  '
@@ -65,13 +64,13 @@ std)
     # as well as targets covering all major OSes and both ABIs on Windows.
     # rustc itself tests i686-pc-windows-msvc so we test the other.
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64-apple-darwin i686-pc-windows-gnu x86_64-pc-windows-msvc; do
-        echo "::group::Testing std ($TARGET)"
+        echo "::group::./run-test std --tests ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --tests \
             -- $(for M in $SKIP; do echo "--skip $M "; done) \
             2>&1 | ts -i '%.s  '
         echo "::endgroup::"
-        echo "::group::Testing std docs ($TARGET)"
+        echo "::group::./run-test std --doc ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
             -- $(for M in $SKIP; do echo "--skip $M "; done) \
@@ -94,7 +93,6 @@ simd)
     export CARGO_TARGET_DIR=$(pwd)/target
     MANIFEST="$MIRI_LIB_SRC/portable-simd/Cargo.toml"
 
-    echo "::group::Testing portable-simd"
     # FIXME: disabling float non-determinism due to <https://github.com/rust-lang/portable-simd/issues/463>.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-deterministic-floats" \
         cargo miri test --manifest-path "$MANIFEST" --tests -- --skip ptr \
@@ -103,7 +101,6 @@ simd)
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-permissive-provenance" \
         cargo miri test --manifest-path "$MANIFEST" --tests -- ptr \
         2>&1 | ts -i '%.s  '
-    echo "::endgroup::"
     # No need to run the doc tests: they are included in libcore.
     ;;
 stdarch)
