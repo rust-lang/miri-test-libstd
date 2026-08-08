@@ -41,7 +41,18 @@ export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $EXTRAFLAGS"
 # run test
 export CARGO_TARGET_DIR=$(pwd)/target
 if [[ -z "${USE_NEXTEST:-}" ]]; then
-    cargo miri test --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+    CARGO_CMD="cargo miri test"
 else
-    cargo miri nextest run --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+    CARGO_CMD="cargo miri nextest run"
 fi
+
+$CARGO_CMD --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
+# Also run tests if they are in another crate
+case "$CRATE" in
+    core)
+        $CARGO_CMD --manifest-path "$MIRI_LIB_SRC/coretests/Cargo.toml" "$@"
+        ;;
+    alloc)
+        $CARGO_CMD --manifest-path "$MIRI_LIB_SRC/alloctests/Cargo.toml" "$@"
+        ;;
+esac
