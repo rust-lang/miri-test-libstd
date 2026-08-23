@@ -4,6 +4,9 @@ set -euo pipefail
 # Miri flags we apply everywhere
 DEFAULTFLAGS="-Zrandomize-layout -Zmiri-strict-provenance"
 
+# Some doctests don't work with the new trait solver.
+export RUSTDOCFLAGS="-Znext-solver=coherence"
+
 # make sure we keep using the current toolchain even in subdirs that have a toolchain file
 export RUSTUP_TOOLCHAIN=$(rustup show active-toolchain | head -n1 | cut -f 1 -d' ')
 
