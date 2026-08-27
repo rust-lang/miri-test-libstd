@@ -43,7 +43,7 @@ export CARGO_TARGET_DIR=$(pwd)/target
 if [[ -z "${USE_NEXTEST:-}" ]]; then
     CARGO_CMD="cargo miri test"
 else
-    CARGO_CMD="cargo miri nextest run"
+    CARGO_CMD="cargo miri nextest run --no-tests=warn"
 fi
 
 $CARGO_CMD --manifest-path "$MIRI_LIB_SRC/$CRATE/Cargo.toml" "$@"
