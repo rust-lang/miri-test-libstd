@@ -85,7 +85,7 @@ std-all)
     # Are we std yet? Run the tests we are skipping above.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-no-short-fd-operations" USE_NEXTEST=1 \
         ./run-test.sh std --no-fail-fast --config-file .config/nextest.toml \
-        -- fs:: net:: process:: sys:: || true
+        -- fs:: net:: process:: sys:: os:: || true
     # And don't forget the doc tests.
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation  -Zmiri-no-short-fd-operations" \
         ./run-test.sh std --no-fail-fast --doc -- fs:: net:: process:: sys:: || true
