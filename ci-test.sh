@@ -83,12 +83,16 @@ std)
     ;;
 std-all)
     # Are we std yet? Run the tests we are skipping above.
+    echo "::group::run all std unit/integration tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-no-short-fd-operations" USE_NEXTEST=1 \
         ./run-test.sh std --no-fail-fast --config-file .config/nextest.toml \
         -- fs:: net:: process:: sys:: os:: || true
+        echo "::endgroup::"
     # And don't forget the doc tests.
+    echo "::group::run all std doc tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation  -Zmiri-no-short-fd-operations" \
-        ./run-test.sh std --no-fail-fast --doc -- fs:: net:: process:: sys:: || true
+        ./run-test.sh std --no-fail-fast --doc -- fs:: net:: process:: sys:: os:: || true
+    echo "::endgroup::"
     ;;
 simd)
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
