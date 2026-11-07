@@ -1,6 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+function begingroup {
+  echo "::group::$@"
+  set -x
+}
+
+function endgroup {
+  set +x
+  echo "::endgroup"
+}
+
 # Miri flags we apply everywhere
 DEFAULTFLAGS="-Zrandomize-layout -Zmiri-strict-provenance"
 
@@ -60,39 +70,49 @@ alloc)
     done
     ;;
 std)
-    # Modules that we skip because they need a lot of shims we don't support.
-    SKIP="fs:: net:: process:: sys:: os::windows::"
+    # Rust CI already runs all tests (on Linux and macOS) that are not excluded via
+    # `skip_missing_miri_shims`. There is no point in us repeating that here. Instead we run
+    # *all* tests in a set of modules that we aim to exhaustively support.
+    SUPPORTED_MODULES="env:: path:: random:: sync:: time:: thread::"
+    # Many tests are in separate integration tests, which we cannot cover with the same filter.
+    SUPPORTED_INTEGRATION_TESTS="env env_modify path sync sync_view time thread thread_local"
 
     # A 64bit little-endian and a 32bit big-endian target,
     # as well as targets covering all major OSes and both ABIs on Windows.
-    # rustc itself tests i686-pc-windows-msvc so we test the other.
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64-apple-darwin i686-pc-windows-gnu x86_64-pc-windows-msvc; do
-        echo "::group::./run-test std --tests ($TARGET)"
+        begingroup "./run-test std --lib ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
-            ./run-test.sh std --target $TARGET --tests \
-            -- $(for M in $SKIP; do echo "--skip $M "; done) \
+            ./run-test.sh std --target $TARGET --lib \
+            -- $STD_SUPPORTED_MODULES \
             2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
-        echo "::group::./run-test std --doc ($TARGET)"
+        endgroup
+        begingroup "./run-test std --test ($TARGET)"
+        MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
+            ./run-test.sh std --target $TARGET \
+            $(for T in $SUPPORTED_INTEGRATION_TESTS; do echo "--test $T "; done) \
+            2>&1 | ts -i '%.s  '
+        endgroup
+        begingroup "./run-test std --doc ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --doc \
-            -- $(for M in $SKIP; do echo "--skip $M "; done) \
+            -- env:: path:: random:: sync:: time:: thread:: \
             2>&1 | ts -i '%.s  '
-        echo "::endgroup::"
+        endgroup
     done
     ;;
 std-all)
-    # Are we std yet? Run the tests we are skipping above.
-    echo "::group::run all std unit/integration tests"
+    # Are we std yet? Run all tests in nextest ignoring failures. Skip what we already handle above.
+    begingroup "run all std unit/integration tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-no-short-fd-operations" USE_NEXTEST=1 \
         ./run-test.sh std --no-fail-fast --config-file .config/nextest.toml \
-        -- fs:: net:: process:: sys:: os:: || true
-        echo "::endgroup::"
+        || true
+    endgroup
     # And don't forget the doc tests.
-    echo "::group::run all std doc tests"
+    begingroup "run all std doc tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation  -Zmiri-no-short-fd-operations" \
-        ./run-test.sh std --no-fail-fast --doc -- fs:: net:: process:: sys:: os:: || true
-    echo "::endgroup::"
+        ./run-test.sh std --no-fail-fast --doc \
+        || true
+    endgroup
     ;;
 simd)
     export RUSTFLAGS="-Ainternal_features ${RUSTFLAGS:-}"
