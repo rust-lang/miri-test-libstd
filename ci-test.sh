@@ -75,6 +75,8 @@ std)
     SKIP_MODULES="fs:: net:: process:: sys:: os::"
     # For integration tests, we cannot have an exclusion list, so we list the supported tests.
     SUPPORTED_INTEGRATION_TESTS="env env_modify error istr num path sync sync_view time thread thread_local"
+    # FIXME: need to temporarily disable some tests until Miri is fixed.
+    DEFAULTFLAGS="$DEFAULTFLAGS --cfg skip_unsupported_miri_tests"
 
     # A 64bit little-endian and a 32bit big-endian target,
     # as well as targets covering all tier 1 OSes and both ABIs on Windows.
