@@ -74,9 +74,8 @@ std)
     # tests except those in a few modules. This is what we aim to support on all tier 1 targets.
     SKIP_MODULES="fs:: net:: process:: sys:: os::"
     # For integration tests, we cannot have an exclusion list, so we list the supported tests.
-    SUPPORTED_INTEGRATION_TESTS="env env_modify error istr num path sync sync_view time thread thread_local"
-    # FIXME: need to temporarily disable some tests until Miri is fixed.
-    DEFAULTFLAGS="$DEFAULTFLAGS --cfg skip_unsupported_miri_tests"
+    # thread_local is handled separately below because on Windows that needs fiber support.
+    SUPPORTED_INTEGRATION_TESTS="env env_modify error istr num path sync sync_view time thread"
 
     # A 64bit little-endian and a 32bit big-endian target,
     # as well as targets covering all tier 1 OSes and both ABIs on Windows.
@@ -91,6 +90,7 @@ std)
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET \
             $(for T in $SUPPORTED_INTEGRATION_TESTS; do echo "--test $T "; done) \
+            $(if [[ $TARGET != *"windows"* ]]; then echo "--test thread_local"; fi) \
             2>&1 | ts -i '%.s  '
         endgroup
         begingroup "./run-test std --doc ($TARGET)"
@@ -102,13 +102,12 @@ std)
     done
     ;;
 std-all)
-    # Are we std yet? Run all tests in nextest ignoring failures. Skip what we already handle above.
+    # Are we std yet? Run all tests in nextest ignoring failures.
     begingroup "run all std unit/integration tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation -Zmiri-no-short-fd-operations" USE_NEXTEST=1 \
         ./run-test.sh std --no-fail-fast --config-file .config/nextest.toml \
         || true
     endgroup
-    # And don't forget the doc tests.
     begingroup "run all std doc tests"
     MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation  -Zmiri-no-short-fd-operations" \
         ./run-test.sh std --no-fail-fast --doc \
