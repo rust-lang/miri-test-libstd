@@ -69,17 +69,20 @@ alloc)
     done
     ;;
 std)
-    # Rust CI already runs all tests (on Linux and macOS) that are not excluded via
-    # `skip_missing_miri_shims`. There is no point in us repeating that here. Instead we run *all*
-    # tests except those in a few modules. This is what we aim to support on all tier 1 targets.
-    SKIP_MODULES="fs:: net:: process:: sys:: os::"
-    # For integration tests, we cannot have an exclusion list, so we list the supported tests.
-    # thread_local is handled separately below because on Windows that needs fiber support.
-    SUPPORTED_INTEGRATION_TESTS="env env_modify error istr num path sync sync_view time thread"
-
     # A 64bit little-endian and a 32bit big-endian target,
     # as well as targets covering all tier 1 OSes and both ABIs on Windows.
     for TARGET in x86_64-unknown-linux-gnu mips-unknown-linux-gnu aarch64-apple-darwin i686-pc-windows-msvc x86_64-pc-windows-gnu; do
+        # Rust CI already runs all tests (on Linux and macOS) that are not excluded via
+        # `skip_missing_miri_shims`. There is no point in us repeating that here. Instead we run *all*
+        # tests except those in a few modules. This is what we aim to support on all tier 1 targets.
+        SKIP_MODULES="fs:: net:: process:: sys:: os::"
+        # For integration tests, we cannot have an exclusion list, so we list the supported tests.
+        SUPPORTED_INTEGRATION_TESTS="env env_modify error istr num path sync sync_view time thread"
+        if [[ $TARGET != *"windows"* ]]; then
+            # thread_local is handled separately because on Windows that needs fiber support.
+            SUPPORTED_INTEGRATION_TESTS+=" thread_local"
+        fi
+
         begingroup "./run-test std --lib ($TARGET)"
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET --lib \
@@ -90,7 +93,6 @@ std)
         MIRIFLAGS="$DEFAULTFLAGS -Zmiri-disable-isolation" \
             ./run-test.sh std --target $TARGET \
             $(for T in $SUPPORTED_INTEGRATION_TESTS; do echo "--test $T "; done) \
-            $(if [[ $TARGET != *"windows"* ]]; then echo "--test thread_local"; fi) \
             2>&1 | ts -i '%.s  '
         endgroup
         begingroup "./run-test std --doc ($TARGET)"
